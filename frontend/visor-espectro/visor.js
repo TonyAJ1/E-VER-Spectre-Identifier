@@ -33,6 +33,25 @@
   // onda.
   var COLOR_RESALTADO = "#e07a1f";
 
+  // T-24: cada grupo tiene su propio color, así dos regiones que se enciman,
+  // como O–H y N–H, se distinguen. Los colores se eligieron para que se
+  // separen bien entre sí sobre fondo claro y oscuro.
+  var COLORES_POR_GRUPO = {
+    "GF-01": "#d1495b",
+    "GF-02": "#2e86ab",
+    "GF-03": "#7b61c9",
+    "GF-04": "#e07a1f",
+    "GF-05": "#2a9d8f",
+    "GF-06": "#b8860b",
+    "GF-07": "#c2549d",
+  };
+
+  var TEXTO_SIN_PICO = "región completa, sin posición exacta del pico";
+
+  function colorDe(grupo) {
+    return COLORES_POR_GRUPO[grupo] || COLOR_RESALTADO;
+  }
+
   var complementoResaltado = {
     id: "resaltado",
     beforeDatasetsDraw: function (grafica, argumentos, opciones) {
@@ -50,7 +69,7 @@
         var b = ejeX.getPixelForValue(marca.region_cm1[1]);
         var izquierda = Math.max(area.left, Math.min(a, b));
         var derecha = Math.min(area.right, Math.max(a, b));
-        contexto.globalAlpha = 0.22;
+        contexto.globalAlpha = 0.25;
         contexto.fillStyle = color;
         contexto.fillRect(izquierda, area.top, derecha - izquierda, area.bottom - area.top);
         contexto.globalAlpha = 1;
@@ -186,13 +205,41 @@
    * Cada marca trae grupo, region_cm1 y pico_cm1, que puede venir vacío.
    * Una lista vacía quita todas las marcas.
    */
-  function resaltar(contenedor, marcas) {
+  function resaltar(contenedor, marcas, leyenda) {
+    var conColor = marcas.map(function (marca) {
+      return Object.assign({}, marca, { color: colorDe(marca.grupo) });
+    });
+    if (leyenda) {
+      pintarLeyenda(leyenda, conColor);
+    }
     var grafica = graficas.get(contenedor);
     if (!grafica) {
       return;
     }
-    grafica.options.plugins.resaltado.marcas = marcas.slice();
+    grafica.options.plugins.resaltado.marcas = conColor;
     grafica.update("none");
+  }
+
+  // La leyenda dice qué color es de qué grupo y avisa cuando un grupo no
+  // tiene posición exacta del pico, porque entonces se resalta la región
+  // completa (CA-06.3).
+  function pintarLeyenda(leyenda, marcas) {
+    leyenda.textContent = "";
+    leyenda.hidden = marcas.length === 0;
+    marcas.forEach(function (marca) {
+      var elemento = document.createElement("li");
+      elemento.className = "leyenda-elemento";
+      elemento.dataset.grupo = marca.grupo;
+      var muestra = document.createElement("span");
+      muestra.className = "leyenda-muestra";
+      muestra.style.backgroundColor = marca.color;
+      var texto = document.createElement("span");
+      var sinPico = marca.pico_cm1 === null || marca.pico_cm1 === undefined;
+      texto.textContent = (marca.nombre || marca.grupo) + (sinPico ? " (" + TEXTO_SIN_PICO + ")" : "");
+      elemento.appendChild(muestra);
+      elemento.appendChild(texto);
+      leyenda.appendChild(elemento);
+    });
   }
 
   function marcas(contenedor) {

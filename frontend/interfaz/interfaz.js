@@ -56,6 +56,7 @@
 
   var seccionGrafica = document.getElementById("grafica");
   var lienzoGrafica = document.getElementById("grafica-lienzo");
+  var leyendaGrafica = document.getElementById("grafica-leyenda");
 
   // Incremento 2: la gráfica solo existe junto a un archivo aprobado. En
   // cualquier otro estado se borra, para no dejar una gráfica vieja o vacía.
@@ -87,7 +88,7 @@
 
   function quitarResaltado() {
     resaltados = [];
-    window.EVER.visor.resaltar(lienzoGrafica, []);
+    window.EVER.visor.resaltar(lienzoGrafica, [], leyendaGrafica);
   }
 
   function ocultarAnalisis() {
@@ -170,7 +171,7 @@
           pico_cm1: deteccion.pico_cm1,
         });
       }
-      window.EVER.visor.resaltar(lienzoGrafica, resaltados);
+      window.EVER.visor.resaltar(lienzoGrafica, resaltados, leyendaGrafica);
     });
     return boton;
   }

@@ -283,3 +283,31 @@ input[type="file"]:focus-visible {
   background: var(--principal);
   color: var(--principal-texto);
 }
+
+/* Incremento 4: leyenda de los grupos resaltados (T-24). */
+
+.grafica-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.leyenda-elemento {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.leyenda-muestra {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  opacity: 0.8;
+}

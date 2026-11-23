@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.pruebas.apoyo_navegador import subir_en_la_pagina
+from backend.pruebas.apoyo_navegador import color_en, marcas, subir_en_la_pagina
 from backend.utilerias.catalogo import obtener as obtener_catalogo
 from motor_identificacion.pruebas import espectros_simulados as sim
 
@@ -30,26 +30,6 @@ def analizar_en_la_pagina(pagina, servidor, ruta) -> None:
     pagina.click("#boton-analizar")
     pagina.wait_for_function(
         "document.getElementById('analisis').dataset.estado === 'detecciones'"
-    )
-
-
-def marcas(pagina) -> list:
-    return pagina.evaluate(
-        "window.EVER.visor.marcas(document.getElementById('grafica-lienzo'))"
-    )
-
-
-def color_en(pagina, onda: float) -> list:
-    """El color del pixel de la gráfica en ese número de onda, cerca de la
-    base, donde no pasa la línea del espectro."""
-    return pagina.evaluate(
-        """(onda) => {
-            const g = window.EVER.visor.grafica(document.getElementById('grafica-lienzo'));
-            const x = Math.round(g.scales.x.getPixelForValue(onda) * devicePixelRatio);
-            const y = Math.round((g.chartArea.bottom - 20) * devicePixelRatio);
-            return Array.from(g.ctx.getImageData(x, y, 1, 1).data);
-        }""",
-        onda,
     )
 
 
