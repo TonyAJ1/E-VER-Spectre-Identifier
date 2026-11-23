@@ -158,6 +158,8 @@ CODIGOS_ESPERADOS = (
     # Agregados por T-19 para los resultados del motor.
     mensajes.SIN_DETECCIONES,
     mensajes.ANALISIS_FALLIDO,
+    # Agregado por T-22 para el grupo sin plantilla.
+    mensajes.EXPLICACION_NO_DISPONIBLE,
 )
 
 

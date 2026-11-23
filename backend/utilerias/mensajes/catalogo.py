@@ -78,6 +78,9 @@ SIN_DETECCIONES = "SIN_DETECCIONES"
 #: pide el criterio, palabra por palabra.
 ANALISIS_FALLIDO = "ANALISIS_FALLIDO"
 
+#: Un grupo detectado no tiene plantilla de explicación (T-22, CA-07.3).
+EXPLICACION_NO_DISPONIBLE = "EXPLICACION_NO_DISPONIBLE"
+
 
 class CodigoDesconocido(Exception):
     """Se pidió un código que no está en el catálogo.
@@ -282,6 +285,18 @@ _CATALOGO: dict[str, _Entrada] = {
         titulo="No se pudo analizar",
         texto=lambda c: "No fue posible completar el análisis; intenta de nuevo",
         accion=lambda c: "Su archivo sigue cargado: pulse «Analizar» otra vez.",
+    ),
+    # Incremento 4, capa educativa (T-22).
+    EXPLICACION_NO_DISPONIBLE: _Entrada(
+        titulo="Explicación no disponible",
+        texto=lambda c: (
+            "Este grupo se detectó, pero por ahora no hay una explicación "
+            "escrita para él."
+        ),
+        accion=lambda c: (
+            "Consulte la región y la confianza del grupo; el resto de los "
+            "resultados está completo."
+        ),
     ),
 }
 
