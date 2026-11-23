@@ -89,3 +89,72 @@ def csv_un_byte_de_mas(archivos_grandes: dict[str, Path]) -> Path:
 def csv_tres_megas(archivos_grandes: dict[str, Path]) -> Path:
     """CSV válido de ~3 MB: pasa de 1 MB y obliga al temporal de FastAPI (RNF-09)."""
     return archivos_grandes["tres_megas"]
+
+
+# --------------------------------------------------------------------------- #
+# Navegador real para MOD-01 (T-06) y las pruebas de punta a punta (T-07)
+# --------------------------------------------------------------------------- #
+
+#: Variable de entorno opcional con la ruta de un Chromium ya instalado. Si no
+#: está, Playwright usa el suyo («python -m playwright install chromium»).
+VARIABLE_CHROMIUM = "EVER_CHROMIUM"
+
+#: Variable de entorno opcional: carpeta donde guardar las capturas que sirven
+#: de evidencia (sección 10 del plan). Fuera del repositorio.
+VARIABLE_EVIDENCIA = "EVER_EVIDENCIA"
+
+#: Carpeta del frontend (MOD-01 y servicios).
+CARPETA_FRONTEND = RAIZ / "frontend"
+
+
+@pytest.fixture(scope="session")
+def navegador():
+    """Un Chromium sin ventana para toda la corrida."""
+    import os
+
+    sync_api = pytest.importorskip(
+        "playwright.sync_api",
+        reason="falta Playwright: «pip install -r requirements.txt»",
+    )
+    ruta = os.environ.get(VARIABLE_CHROMIUM) or None
+    with sync_api.sync_playwright() as playwright:
+        try:
+            chromium = playwright.chromium.launch(executable_path=ruta)
+        except Exception as error:  # pragma: no cover - depende de la máquina
+            pytest.fail(
+                "no se pudo abrir Chromium. Instálelo una vez con "
+                f"«python -m playwright install chromium» ({type(error).__name__})"
+            )
+        yield chromium
+        chromium.close()
+
+
+@pytest.fixture
+def pagina(navegador):
+    """Una pestaña limpia por prueba, del ancho de un celular (360 px)."""
+    contexto = navegador.new_context(viewport={"width": 360, "height": 740})
+    pestana = contexto.new_page()
+    yield pestana
+    contexto.close()
+
+
+@pytest.fixture
+def evidencia(request: pytest.FixtureRequest, tmp_path: Path):
+    """Guarda una captura con el nombre de la prueba.
+
+    Siempre se escribe en la carpeta temporal de la prueba; si existe la
+    variable `EVER_EVIDENCIA`, también se copia ahí para la bitácora.
+    """
+    import os
+    import shutil
+
+    def guardar(pestana, nombre: str) -> Path:
+        ruta = tmp_path / f"{nombre}.png"
+        pestana.screenshot(path=str(ruta), full_page=True)
+        destino = os.environ.get(VARIABLE_EVIDENCIA)
+        if destino:
+            Path(destino).mkdir(parents=True, exist_ok=True)
+            shutil.copy(ruta, Path(destino) / ruta.name)
+        return ruta
+
+    return guardar

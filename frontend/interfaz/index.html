@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-VER Spectre Identifier</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <!--
+    MOD-01 · Interfaz web (incremento 1, T-06).
+    Solo sube el archivo y muestra el veredicto. No sabe de tamaños, formatos,
+    puntos ni rangos: esos valores viven en UT-03 y los aplica el servidor
+    (MOD-02 y MOD-03). Por eso el selector no tiene «accept=...»: escribir aquí
+    la lista de formatos sería repetir UT-03.
+  -->
+  <main class="pagina">
+    <header class="encabezado">
+      <h1>E-VER Spectre Identifier</h1>
+      <p class="subtitulo">Suba su espectro infrarrojo para revisarlo antes del análisis.</p>
+    </header>
+
+    <form id="formulario" class="tarjeta" novalidate>
+      <label class="etiqueta" for="archivo">Archivo del espectro</label>
+      <input id="archivo" name="archivo" type="file">
+      <button id="boton-validar" class="boton boton-principal" type="submit" disabled>
+        Validar archivo
+      </button>
+    </form>
+
+    <section id="resultado" class="tarjeta resultado" data-estado="inicial"
+             aria-live="polite" hidden>
+      <h2 id="resultado-titulo" class="resultado-titulo"></h2>
+      <p id="resultado-nombre" class="resultado-nombre"></p>
+      <p id="resultado-mensaje" class="resultado-mensaje"></p>
+      <p id="resultado-accion" class="resultado-accion"></p>
+    </section>
+
+    <!-- D-4: «Analizar» está presente; se habilita al aprobar el archivo y
+         todavía no hace nada (RF-04 llega en el incremento 3). -->
+    <button id="boton-analizar" class="boton boton-analizar" type="button" disabled>
+      Analizar
+    </button>
+  </main>
+
+  <script src="../servicios/validacion.js"></script>
+  <script src="interfaz.js"></script>
+</body>
+</html>
