@@ -16,9 +16,9 @@
     "rango_rejilla_cm1": [400, 4000]
   },
   "motor": {
-    "_nota": "Se usan a partir del incremento 3 (MOD-06).",
+    "_nota": "MOD-06 (incremento 3). Plan B del diseño de MOD-06: mientras no haya modelo entrenado, el peso de las reglas es 1 y el del modelo 0. El diseño sugiere 0.5 y 0.5 cuando exista el modelo.",
     "umbral_confianza": 0.6,
-    "peso_reglas": 0.5,
-    "peso_ml": 0.5
+    "peso_reglas": 1.0,
+    "peso_ml": 0.0
   }
 }
