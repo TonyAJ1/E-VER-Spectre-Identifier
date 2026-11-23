@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 
 from backend.api.analisis import porcentaje
 from backend.educativo.explicador import explicar
@@ -59,8 +59,21 @@ def registrar(
 ) -> None:
     @aplicacion.post(RUTA_REPORTE)
     async def reporte(peticion: Request) -> Response:
-        datos = armar_datos(await peticion.json(), parametros, catalogo)
-        pdf = generar_pdf(datos)
+        # T-27: si el cuerpo no sirve o MOD-08 falla, la página recibe el
+        # mensaje de UT-02 y nada técnico. Los resultados siguen en pantalla
+        # porque la página no los borra, y el usuario puede volver a pedirlo.
+        try:
+            datos = armar_datos(await peticion.json(), parametros, catalogo)
+        except (PeticionInvalida, ValueError):
+            _registro.warning("MOD-08 reporte rechazado | cuerpo invalido")
+            return _fallo(parametros, 400)
+        try:
+            pdf = generar_pdf(datos)
+        except Exception as error:
+            _registro.error(
+                "MOD-08 reporte fallo | tipo=%s", type(error).__name__
+            )
+            return _fallo(parametros, 500)
         _registro.info(
             "MOD-08 reporte | nombre=%s | grupos=%d | bytes=%d",
             datos.nombre_archivo,
@@ -75,6 +88,19 @@ def registrar(
                 "Cache-Control": "no-store",
             },
         )
+
+
+def _fallo(parametros: Configuracion, estado: int) -> JSONResponse:
+    mensaje = mensajes.obtener(mensajes.REPORTE_FALLIDO, parametros)
+    return JSONResponse(
+        {
+            "codigo": mensaje.codigo,
+            "titulo": mensaje.titulo,
+            "mensaje": mensaje.texto,
+            "accion": mensaje.accion,
+        },
+        status_code=estado,
+    )
 
 
 def armar_datos(
@@ -110,11 +136,19 @@ def armar_datos(
         )
     grupos.sort(key=lambda g: -g.porcentaje)
 
+    # T-27, CA-09.2: sin grupos, el PDF lo dice con el mismo aviso de UT-02
+    # que vio el usuario en pantalla.
+    sin_detecciones = None
+    if not grupos:
+        aviso = mensajes.obtener(mensajes.SIN_DETECCIONES, parametros)
+        sin_detecciones = f"{aviso.titulo}. {aviso.texto}"
+
     return DatosDelReporte(
         nombre_archivo=nombre.strip(),
         fecha_hora=fecha_hora,
         grupos=grupos,
         aviso_orientativo=mensajes.obtener(mensajes.RESULTADO_ORIENTATIVO, parametros).texto,
+        sin_detecciones=sin_detecciones,
         imagen_png=_imagen(cuerpo.get("imagen_png")),
     )
 

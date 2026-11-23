@@ -313,6 +313,8 @@
         mensaje: aviso.mensaje,
         accion: aviso.accion,
       });
+      // CA-09.2: también sin detecciones se puede bajar el reporte, que lo dice.
+      prepararReporte(respuesta.datos);
       return;
     }
     if (respuesta.tipo === "resultado") {

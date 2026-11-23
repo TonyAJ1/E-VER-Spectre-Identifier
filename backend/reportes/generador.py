@@ -122,7 +122,10 @@ def generar_pdf(datos: DatosDelReporte) -> bytes:
     ]
     partes += _seccion_grafica(datos, estilos)
     partes.append(Paragraph("Grupos funcionales detectados", estilos["subtitulo"]))
-    partes += _seccion_grupos(datos, estilos)
+    if datos.sin_detecciones:
+        partes.append(Paragraph(_escapar(datos.sin_detecciones), estilos["texto"]))
+    else:
+        partes += _seccion_grupos(datos, estilos)
     partes.append(Paragraph(_escapar(datos.aviso_orientativo), estilos["aviso"]))
 
     documento.build(partes)

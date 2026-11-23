@@ -162,6 +162,8 @@ CODIGOS_ESPERADOS = (
     mensajes.EXPLICACION_NO_DISPONIBLE,
     # Agregado por T-25 para el aviso del reporte.
     mensajes.RESULTADO_ORIENTATIVO,
+    # Agregado por T-27 para el fallo al generar el reporte.
+    mensajes.REPORTE_FALLIDO,
 )
 
 

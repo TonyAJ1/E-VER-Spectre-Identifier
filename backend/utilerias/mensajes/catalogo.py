@@ -84,6 +84,9 @@ EXPLICACION_NO_DISPONIBLE = "EXPLICACION_NO_DISPONIBLE"
 #: El aviso de que el resultado es orientativo, que lleva el reporte (RF-08).
 RESULTADO_ORIENTATIVO = "RESULTADO_ORIENTATIVO"
 
+#: No se pudo armar el PDF del reporte (T-27, CA-09.3).
+REPORTE_FALLIDO = "REPORTE_FALLIDO"
+
 
 class CodigoDesconocido(Exception):
     """Se pidió un código que no está en el catálogo.
@@ -314,6 +317,15 @@ _CATALOGO: dict[str, _Entrada] = {
             "Confirme los grupos importantes con otras pruebas antes de tomar "
             "decisiones con ellos."
         ),
+    ),
+    # Incremento 5, fallo al generar el reporte (T-27).
+    REPORTE_FALLIDO: _Entrada(
+        titulo="No se pudo generar el reporte",
+        texto=lambda c: (
+            "Hubo un problema al armar el PDF. Los resultados del análisis "
+            "siguen en pantalla."
+        ),
+        accion=lambda c: "Pulse «Descargar reporte» otra vez.",
     ),
 }
 
