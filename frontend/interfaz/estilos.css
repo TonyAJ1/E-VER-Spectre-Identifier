@@ -182,3 +182,50 @@ input[type="file"]:focus-visible {
   display: block;
   max-width: 100%;
 }
+
+/* Incremento 3: lista de grupos detectados con su confianza. */
+
+.analisis-titulo {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.analisis[data-estado="sin-detecciones"] .analisis-titulo,
+.analisis[data-estado="error"] .analisis-titulo {
+  color: var(--error);
+}
+
+.analisis-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deteccion {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--borde);
+}
+
+.deteccion:first-child {
+  border-top: none;
+}
+
+.deteccion-nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.deteccion-confianza {
+  font-weight: 600;
+  color: var(--exito);
+  text-align: right;
+}
+
+.deteccion-familias {
+  grid-column: 1 / -1;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}

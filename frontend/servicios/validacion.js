@@ -47,5 +47,6 @@
   }
 
   window.EVER = window.EVER || {};
-  window.EVER.servicios = { validarArchivo: validarArchivo };
+  window.EVER.servicios = window.EVER.servicios || {};
+  window.EVER.servicios.validarArchivo = validarArchivo;
 })();

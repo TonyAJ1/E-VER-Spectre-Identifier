@@ -46,7 +46,10 @@ from starlette.datastructures import UploadFile
 
 from backend.manejador_archivos import recibir
 from backend.nucleo import NOMBRE_RAIZ, obtener_registro
+from backend.api import analisis
 from backend.preprocesamiento.procesador import EspectroProcesado, procesar
+from backend.utilerias.catalogo import Catalogo
+from backend.utilerias.catalogo import obtener as obtener_catalogo
 from backend.utilerias import mensajes
 from backend.utilerias.configuracion import Configuracion
 from backend.utilerias.configuracion import obtener as obtener_configuracion
@@ -82,7 +85,9 @@ def configurar_registro(nivel: int = logging.INFO) -> None:
         raiz.addHandler(consola)
 
 
-def crear_aplicacion(configuracion: Configuracion | None = None) -> FastAPI:
+def crear_aplicacion(
+    configuracion: Configuracion | None = None, catalogo: Catalogo | None = None
+) -> FastAPI:
     """Arma la aplicación.
 
     Args:
@@ -94,6 +99,10 @@ def crear_aplicacion(configuracion: Configuracion | None = None) -> FastAPI:
         ErrorDeConfiguracion: si UT-03 está incompleta o es incoherente.
     """
     parametros = configuracion if configuracion is not None else obtener_configuracion()
+    # El catálogo de UT-01 también se carga al arrancar: sin él MOD-06 no
+    # puede trabajar, y es mejor que el servidor no levante a que falle en
+    # medio de un análisis.
+    grupos = catalogo if catalogo is not None else obtener_catalogo()
     configurar_registro()
 
     aplicacion = FastAPI(
@@ -126,6 +135,9 @@ def crear_aplicacion(configuracion: Configuracion | None = None) -> FastAPI:
             # archivo; esto alcanza también campos de más). RNF-09.
             if formulario is not None:
                 await formulario.close()
+
+    # Incremento 3: la ruta del análisis vive en backend/api/analisis.py.
+    analisis.registrar(aplicacion, parametros, grupos)
 
     @aplicacion.get("/", include_in_schema=False)
     async def inicio() -> RedirectResponse:

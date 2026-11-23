@@ -43,16 +43,25 @@
       <div id="grafica-lienzo" class="grafica-lienzo"></div>
     </section>
 
-    <!-- D-4: «Analizar» está presente; se habilita al aprobar el archivo y
-         todavía no hace nada (RF-04 llega en el incremento 3). -->
+    <!-- «Analizar» se habilita al aprobar el archivo. Desde el incremento 3
+         manda el espectro procesado al motor y muestra los grupos. -->
     <button id="boton-analizar" class="boton boton-analizar" type="button" disabled>
       Analizar
     </button>
+
+    <section id="analisis" class="tarjeta analisis" data-estado="inicial"
+             aria-live="polite" hidden>
+      <h2 id="analisis-titulo" class="analisis-titulo"></h2>
+      <p id="analisis-mensaje" class="analisis-mensaje" hidden></p>
+      <p id="analisis-accion" class="analisis-accion" hidden></p>
+      <ol id="analisis-lista" class="analisis-lista"></ol>
+    </section>
   </main>
 
   <script src="../visor-espectro/libreria/chart.umd.js"></script>
   <script src="../visor-espectro/visor.js"></script>
   <script src="../servicios/validacion.js"></script>
+  <script src="../servicios/analisis.js"></script>
   <script src="interfaz.js"></script>
 </body>
 </html>

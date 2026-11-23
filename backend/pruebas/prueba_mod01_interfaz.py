@@ -153,7 +153,8 @@ def prueba_aceptado_muestra_nombre_y_habilita_analizar(
 def prueba_analizar_no_tiene_accion_en_este_incremento(
     pagina, servidor_estatico: str
 ) -> None:
-    """D-4: presente y habilitado, sin acción. RF-04 llega en el incremento 3."""
+    """D-4: presente y habilitado. Desde el incremento 3, si la respuesta no
+    trae espectro procesado, «Analizar» no tiene nada que mandar al motor."""
     peticiones: list = []
     _simular(
         pagina, 200, {"valido": True, "nombre": "acetona.jdx", "bytes": 10}, peticiones
