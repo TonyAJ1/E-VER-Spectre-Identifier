@@ -32,6 +32,7 @@
     sinPosicion: "El motor no reportó la posición exacta del pico.",
     rasgo: "Lo que lo delata",
     porQue: "Por qué corresponde a este grupo",
+    resaltar: "Resaltar en la gráfica",
   };
 
   var formulario = document.getElementById("formulario");
@@ -84,13 +85,20 @@
 
   // Incremento 3: resultados del análisis.
 
+  function quitarResaltado() {
+    resaltados = [];
+    window.EVER.visor.resaltar(lienzoGrafica, []);
+  }
+
   function ocultarAnalisis() {
+    quitarResaltado();
     seccionAnalisis.hidden = true;
     seccionAnalisis.dataset.estado = "inicial";
     analisisLista.textContent = "";
   }
 
   function pintarAnalisis(estado, piezas) {
+    quitarResaltado();
     seccionAnalisis.hidden = false;
     seccionAnalisis.dataset.estado = estado;
     poner(analisisTitulo, piezas.titulo);
@@ -138,6 +146,35 @@
     return bloque;
   }
 
+  // Incremento 4: cada grupo tiene un botón para resaltarlo en la gráfica.
+  // Se pueden resaltar varios a la vez.
+  var resaltados = [];
+
+  function armarBotonResaltar(deteccion) {
+    var boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "boton-resaltar";
+    boton.textContent = TEXTOS.resaltar;
+    boton.setAttribute("aria-pressed", "false");
+    boton.addEventListener("click", function () {
+      var activo = boton.getAttribute("aria-pressed") === "true";
+      boton.setAttribute("aria-pressed", activo ? "false" : "true");
+      resaltados = resaltados.filter(function (marca) {
+        return marca.grupo !== deteccion.grupo;
+      });
+      if (!activo) {
+        resaltados.push({
+          grupo: deteccion.grupo,
+          nombre: deteccion.nombre,
+          region_cm1: deteccion.region_cm1,
+          pico_cm1: deteccion.pico_cm1,
+        });
+      }
+      window.EVER.visor.resaltar(lienzoGrafica, resaltados);
+    });
+    return boton;
+  }
+
   function mostrarDetecciones(resultado) {
     pintarAnalisis("detecciones", { titulo: TEXTOS.gruposDetectados });
     resultado.detecciones.forEach(function (deteccion) {
@@ -160,6 +197,7 @@
       elemento.appendChild(nombreGrupo);
       elemento.appendChild(confianza);
       elemento.appendChild(familias);
+      elemento.appendChild(armarBotonResaltar(deteccion));
       if (deteccion.explicacion) {
         elemento.appendChild(armarExplicacion(deteccion.explicacion));
       }

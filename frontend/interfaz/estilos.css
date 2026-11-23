@@ -262,3 +262,24 @@ input[type="file"]:focus-visible {
   color: var(--texto-suave);
   font-style: italic;
 }
+
+/* Incremento 4: botón para resaltar un grupo en la gráfica. */
+
+.boton-resaltar {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--principal);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--principal);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.boton-resaltar[aria-pressed="true"] {
+  background: var(--principal);
+  color: var(--principal-texto);
+}

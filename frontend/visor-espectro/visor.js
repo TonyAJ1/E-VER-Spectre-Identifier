@@ -13,6 +13,9 @@
  *
  * Los puntos que caen fuera del tramo medido no se dibujan. Así la gráfica no
  * muestra valores que nadie midió.
+ *
+ * Desde el incremento 4 también resalta la región de cada grupo detectado y
+ * marca la posición de su pico.
  */
 (function () {
   "use strict";
@@ -21,6 +24,50 @@
     ejeHorizontal: "Número de onda (cm⁻¹)",
     ejeVertical: "Absorbancia normalizada",
     serie: "Espectro",
+  };
+
+  // Incremento 4: resaltado de regiones y picos (T-23). Es un complemento
+  // pequeño de Chart.js escrito aquí mismo, para no agregar otra librería.
+  // Dibuja una franja de color sobre la región de cada grupo marcado y, si
+  // el motor dio la posición del pico, una línea punteada en ese número de
+  // onda.
+  var COLOR_RESALTADO = "#e07a1f";
+
+  var complementoResaltado = {
+    id: "resaltado",
+    beforeDatasetsDraw: function (grafica, argumentos, opciones) {
+      var marcas = (opciones && opciones.marcas) || [];
+      if (!marcas.length) {
+        return;
+      }
+      var area = grafica.chartArea;
+      var ejeX = grafica.scales.x;
+      var contexto = grafica.ctx;
+      contexto.save();
+      marcas.forEach(function (marca) {
+        var color = marca.color || COLOR_RESALTADO;
+        var a = ejeX.getPixelForValue(marca.region_cm1[0]);
+        var b = ejeX.getPixelForValue(marca.region_cm1[1]);
+        var izquierda = Math.max(area.left, Math.min(a, b));
+        var derecha = Math.min(area.right, Math.max(a, b));
+        contexto.globalAlpha = 0.22;
+        contexto.fillStyle = color;
+        contexto.fillRect(izquierda, area.top, derecha - izquierda, area.bottom - area.top);
+        contexto.globalAlpha = 1;
+        if (marca.pico_cm1 !== null && marca.pico_cm1 !== undefined) {
+          var x = ejeX.getPixelForValue(marca.pico_cm1);
+          contexto.strokeStyle = color;
+          contexto.lineWidth = 2;
+          contexto.setLineDash([5, 4]);
+          contexto.beginPath();
+          contexto.moveTo(x, area.top);
+          contexto.lineTo(x, area.bottom);
+          contexto.stroke();
+          contexto.setLineDash([]);
+        }
+      });
+      contexto.restore();
+    },
   };
 
   // Una gráfica por contenedor. Se guarda para poder borrarla antes de dibujar
@@ -75,6 +122,7 @@
 
     var grafica = new window.Chart(lienzo, {
       type: "line",
+      plugins: [complementoResaltado],
       data: {
         datasets: [
           {
@@ -95,6 +143,7 @@
         parsing: false,
         normalized: true,
         plugins: {
+          resaltado: { marcas: [] },
           legend: { display: false },
           tooltip: { intersect: false, mode: "nearest", axis: "x" },
         },
@@ -132,10 +181,31 @@
     return grafica;
   }
 
+  /**
+   * Marca sobre la gráfica la región y el pico de los grupos que se le pasen.
+   * Cada marca trae grupo, region_cm1 y pico_cm1, que puede venir vacío.
+   * Una lista vacía quita todas las marcas.
+   */
+  function resaltar(contenedor, marcas) {
+    var grafica = graficas.get(contenedor);
+    if (!grafica) {
+      return;
+    }
+    grafica.options.plugins.resaltado.marcas = marcas.slice();
+    grafica.update("none");
+  }
+
+  function marcas(contenedor) {
+    var grafica = graficas.get(contenedor);
+    return grafica ? grafica.options.plugins.resaltado.marcas.slice() : [];
+  }
+
   window.EVER = window.EVER || {};
   window.EVER.visor = {
     dibujar: dibujar,
     limpiar: limpiar,
+    resaltar: resaltar,
+    marcas: marcas,
     grafica: function (contenedor) {
       return graficas.get(contenedor) || null;
     },
