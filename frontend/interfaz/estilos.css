@@ -229,3 +229,36 @@ input[type="file"]:focus-visible {
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
+
+/* Incremento 4: explicación de cada grupo. */
+
+.explicacion {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+
+.explicacion summary {
+  cursor: pointer;
+  color: var(--principal);
+  font-weight: 600;
+}
+
+.explicacion dl {
+  margin: 8px 0 0;
+}
+
+.explicacion dt {
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.explicacion dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.explicacion-no-disponible {
+  margin: 8px 0 0;
+  color: var(--texto-suave);
+  font-style: italic;
+}

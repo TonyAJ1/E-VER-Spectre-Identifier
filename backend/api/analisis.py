@@ -6,7 +6,8 @@ pide su diseño, y el servidor no tiene que guardar nada entre una petición y
 otra (RNF-09).
 
 La respuesta trae las detecciones del motor ordenadas de mayor a menor
-confianza, cada una con el nombre del grupo que sale de UT-01 y su porcentaje.
+confianza, cada una con el nombre del grupo que sale de UT-01, su porcentaje
+y, desde el incremento 4, la explicación de MOD-07.
 """
 
 from __future__ import annotations
@@ -17,9 +18,11 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from backend.educativo.explicador import explicar
 from backend.nucleo import obtener_registro
 from backend.utilerias import mensajes
-from backend.utilerias.catalogo import Catalogo
+from backend.utilerias.catalogo import Catalogo, Plantilla
+from backend.utilerias.catalogo import obtener_plantillas
 from backend.utilerias.configuracion import Configuracion
 from motor_identificacion.motor import identificar
 
@@ -60,7 +63,9 @@ def analizar_espectro(
     intensidad: list[float],
     parametros: Configuracion,
     catalogo: Catalogo,
+    plantillas: dict[str, Plantilla] | None = None,
 ) -> dict[str, Any]:
+    plantillas = plantillas if plantillas is not None else obtener_plantillas()
     motor = parametros.motor
     resultado = identificar(
         eje,
@@ -75,6 +80,8 @@ def analizar_espectro(
         deteccion["nombre"] = grupo.nombre
         deteccion["familias"] = grupo.familias
         deteccion["porcentaje"] = porcentaje(deteccion["confianza"])
+        # Incremento 4: MOD-07 agrega la explicación de cada grupo.
+        deteccion["explicacion"] = explicar(deteccion, catalogo, plantillas)
     if resultado["sin_detecciones"]:
         aviso = mensajes.obtener(mensajes.SIN_DETECCIONES, parametros)
         resultado["aviso"] = {

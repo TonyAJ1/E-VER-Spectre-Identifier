@@ -26,6 +26,12 @@
     sinConexionAccion: "Revise su conexión y vuelva a intentarlo en unos momentos.",
     analizando: "Analizando el espectro…",
     gruposDetectados: "Grupos funcionales detectados",
+    verExplicacion: "Ver explicación",
+    region: "Región característica",
+    posicion: "Pico observado",
+    sinPosicion: "El motor no reportó la posición exacta del pico.",
+    rasgo: "Lo que lo delata",
+    porQue: "Por qué corresponde a este grupo",
   };
 
   var formulario = document.getElementById("formulario");
@@ -97,6 +103,41 @@
     return String(valor).replace(".", ",") + " %";
   }
 
+  // Incremento 4: la explicación de MOD-07, plegada hasta que el usuario la
+  // abre. Todo se pinta con textContent.
+  function armarExplicacion(explicacion) {
+    var bloque = document.createElement("details");
+    bloque.className = "explicacion";
+    var resumen = document.createElement("summary");
+    resumen.textContent = TEXTOS.verExplicacion;
+    bloque.appendChild(resumen);
+
+    if (!explicacion.disponible) {
+      var aviso = document.createElement("p");
+      aviso.className = "explicacion-no-disponible";
+      aviso.textContent = explicacion.aviso;
+      bloque.appendChild(aviso);
+      return bloque;
+    }
+
+    var lista = document.createElement("dl");
+    [
+      [TEXTOS.region, explicacion.region],
+      [TEXTOS.posicion, explicacion.posicion || TEXTOS.sinPosicion],
+      [TEXTOS.rasgo, explicacion.rasgo],
+      [TEXTOS.porQue, explicacion.por_que],
+    ].forEach(function (par) {
+      var termino = document.createElement("dt");
+      termino.textContent = par[0];
+      var definicion = document.createElement("dd");
+      definicion.textContent = par[1];
+      lista.appendChild(termino);
+      lista.appendChild(definicion);
+    });
+    bloque.appendChild(lista);
+    return bloque;
+  }
+
   function mostrarDetecciones(resultado) {
     pintarAnalisis("detecciones", { titulo: TEXTOS.gruposDetectados });
     resultado.detecciones.forEach(function (deteccion) {
@@ -119,6 +160,9 @@
       elemento.appendChild(nombreGrupo);
       elemento.appendChild(confianza);
       elemento.appendChild(familias);
+      if (deteccion.explicacion) {
+        elemento.appendChild(armarExplicacion(deteccion.explicacion));
+      }
       analisisLista.appendChild(elemento);
     });
   }
