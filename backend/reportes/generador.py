@@ -6,8 +6,8 @@ tocar el disco (RNF-09). El servidor no guarda el reporte; la página lo
 descarga y ahí termina.
 
 El reporte lleva lo que pide RF-08: el nombre del archivo, la fecha y hora del
-análisis, cada grupo con su confianza y su explicación y el aviso de que el
-resultado es orientativo. Los textos de los grupos salen del catálogo y de
+análisis, la gráfica con las regiones resaltadas (desde T-26), cada grupo con
+su confianza y su explicación y el aviso de que el resultado es orientativo. Los textos de los grupos salen del catálogo y de
 MOD-07, no de lo que mande la página.
 
 Para que se vean bien símbolos como C≡N o cm⁻¹ se usa la fuente DejaVu, que
@@ -27,7 +27,8 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer
 
 CARPETA_FUENTES = Path(__file__).resolve().parent / "fuentes"
 FUENTE = "DejaVuSans"
@@ -128,8 +129,24 @@ def generar_pdf(datos: DatosDelReporte) -> bytes:
     return salida.getvalue()
 
 
+#: Ancho de la gráfica en la hoja. El alto sale de la proporción de la imagen.
+ANCHO_GRAFICA = 17 * cm
+
+
 def _seccion_grafica(datos: DatosDelReporte, estilos) -> list:
-    return []
+    """T-26: la gráfica con las regiones resaltadas, tal como la dibujó la
+    página. Si por alguna razón no llegó, el reporte lo dice en lugar de dejar
+    un hueco."""
+    partes: list = [Paragraph("Espectro con las regiones resaltadas", estilos["subtitulo"])]
+    if not datos.imagen_png:
+        partes.append(Paragraph("No se recibió la imagen de la gráfica.", estilos["suave"]))
+        return partes
+    lector = ImageReader(BytesIO(datos.imagen_png))
+    ancho, alto = lector.getSize()
+    partes.append(
+        Image(BytesIO(datos.imagen_png), width=ANCHO_GRAFICA, height=ANCHO_GRAFICA * alto / ancho)
+    )
+    return partes
 
 
 def _seccion_grupos(datos: DatosDelReporte, estilos) -> list:

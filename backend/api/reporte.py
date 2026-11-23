@@ -12,6 +12,8 @@ La respuesta es el PDF como descarga. No se escribe en disco.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import math
 from datetime import datetime
 from typing import Any
@@ -35,6 +37,13 @@ from backend.utilerias.configuracion import Configuracion
 _registro = obtener_registro("api")
 
 RUTA_REPORTE: str = "/api/reporte"
+
+#: Tope de la imagen de la gráfica, ya decodificada. Una gráfica de la
+#: página pesa unos cientos de kilobytes; el tope solo evita cuerpos absurdos.
+BYTES_MAXIMOS_IMAGEN = 4 * 1024 * 1024
+
+_PREFIJO_PNG = "data:image/png;base64,"
+_FIRMA_PNG = b"\x89PNG\r\n\x1a\n"
 
 #: Largo máximo del nombre que se imprime en el reporte. Es solo una defensa
 #: contra cuerpos absurdos, no un parámetro de negocio.
@@ -106,7 +115,27 @@ def armar_datos(
         fecha_hora=fecha_hora,
         grupos=grupos,
         aviso_orientativo=mensajes.obtener(mensajes.RESULTADO_ORIENTATIVO, parametros).texto,
+        imagen_png=_imagen(cuerpo.get("imagen_png")),
     )
+
+
+def _imagen(valor: Any) -> bytes | None:
+    """La gráfica que manda la página, como PNG. Solo se acepta un PNG de
+    verdad; cualquier otra cosa se rechaza sin intentar abrirla."""
+    if valor is None:
+        return None
+    if not isinstance(valor, str) or not valor.startswith(_PREFIJO_PNG):
+        raise PeticionInvalida("la gráfica no viene como PNG")
+    texto = valor[len(_PREFIJO_PNG):]
+    if len(texto) > BYTES_MAXIMOS_IMAGEN * 4 // 3 + 4:
+        raise PeticionInvalida("la gráfica es demasiado grande")
+    try:
+        datos = base64.b64decode(texto, validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise PeticionInvalida("la gráfica no se pudo leer") from error
+    if not datos.startswith(_FIRMA_PNG):
+        raise PeticionInvalida("la gráfica no es un PNG")
+    return datos
 
 
 def _deteccion(entrada: Any, catalogo: Catalogo) -> dict[str, Any]:

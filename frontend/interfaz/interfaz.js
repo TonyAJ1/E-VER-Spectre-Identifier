@@ -246,9 +246,15 @@
   }
 
   function cuerpoDelReporte() {
+    // T-26: la gráfica del reporte lleva resaltados todos los grupos
+    // detectados, no solo los que el usuario marcó en pantalla.
+    var marcasDelReporte = analisisActual.resultado.detecciones.map(function (d) {
+      return { grupo: d.grupo, nombre: d.nombre, region_cm1: d.region_cm1, pico_cm1: d.pico_cm1 };
+    });
     return {
       nombre_archivo: nombreActual,
       fecha_hora: analisisActual.fechaHora,
+      imagen_png: window.EVER.visor.imagenParaReporte(espectroActual, marcasDelReporte),
       detecciones: analisisActual.resultado.detecciones.map(function (d) {
         return {
           grupo: d.grupo,

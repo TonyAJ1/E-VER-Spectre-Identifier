@@ -242,6 +242,103 @@
     });
   }
 
+  // Incremento 5 (T-26): la gráfica para el reporte PDF. Se dibuja aparte,
+  // fuera de la pantalla y con colores claros fijos, para que se vea igual en
+  // el papel aunque la página esté en modo oscuro. Lleva resaltados todos los
+  // grupos que se le pasen y devuelve la imagen PNG como texto en base 64.
+  var ANCHO_IMAGEN = 900;
+  var ALTO_IMAGEN = 420;
+
+  var complementoFondoBlanco = {
+    id: "fondoBlanco",
+    beforeDraw: function (grafica) {
+      var contexto = grafica.ctx;
+      contexto.save();
+      contexto.fillStyle = "#ffffff";
+      contexto.fillRect(0, 0, grafica.width, grafica.height);
+      contexto.restore();
+    },
+  };
+
+  function imagenParaReporte(espectro, marcasDelReporte) {
+    var caja = document.createElement("div");
+    caja.style.position = "fixed";
+    caja.style.left = "-10000px";
+    caja.style.top = "0";
+    caja.style.width = ANCHO_IMAGEN + "px";
+    caja.style.height = ALTO_IMAGEN + "px";
+    var lienzo = document.createElement("canvas");
+    lienzo.width = ANCHO_IMAGEN;
+    lienzo.height = ALTO_IMAGEN;
+    caja.appendChild(lienzo);
+    document.body.appendChild(caja);
+
+    var eje = espectro.eje_cm1;
+    var mayor = Math.max(eje[0], eje[eje.length - 1]);
+    var menor = Math.min(eje[0], eje[eje.length - 1]);
+    var texto = "#333333";
+    var reticula = "#dddddd";
+    var conColor = marcasDelReporte.map(function (marca) {
+      return Object.assign({}, marca, { color: colorDe(marca.grupo) });
+    });
+
+    var grafica = new window.Chart(lienzo, {
+      type: "line",
+      plugins: [complementoFondoBlanco, complementoResaltado],
+      data: {
+        datasets: [
+          {
+            data: puntos(espectro),
+            borderColor: "#1f5fbf",
+            borderWidth: 1.5,
+            pointRadius: 0,
+            spanGaps: false,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        animation: false,
+        responsive: false,
+        devicePixelRatio: 2,
+        parsing: false,
+        plugins: {
+          resaltado: { marcas: conColor },
+          legend: { display: false },
+          tooltip: { enabled: false },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            reverse: true,
+            min: menor,
+            max: mayor,
+            title: { display: true, text: TEXTOS.ejeHorizontal, color: texto },
+            ticks: {
+              color: texto,
+              maxRotation: 0,
+              callback: function (valor) {
+                return String(Math.round(valor));
+              },
+            },
+            grid: { color: reticula },
+          },
+          y: {
+            min: 0,
+            max: 1,
+            title: { display: true, text: TEXTOS.ejeVertical, color: texto },
+            ticks: { color: texto },
+            grid: { color: reticula },
+          },
+        },
+      },
+    });
+    var imagen = grafica.toBase64Image("image/png");
+    grafica.destroy();
+    caja.remove();
+    return imagen;
+  }
+
   function marcas(contenedor) {
     var grafica = graficas.get(contenedor);
     return grafica ? grafica.options.plugins.resaltado.marcas.slice() : [];
@@ -253,6 +350,7 @@
     limpiar: limpiar,
     resaltar: resaltar,
     marcas: marcas,
+    imagenParaReporte: imagenParaReporte,
     grafica: function (contenedor) {
       return graficas.get(contenedor) || null;
     },
