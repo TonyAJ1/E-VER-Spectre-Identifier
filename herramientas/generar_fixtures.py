@@ -113,6 +113,25 @@ def generar(carpeta: Path = CARPETA_PRUEBAS) -> list[tuple[str, int]]:
                 "intensidades multiplicadas por mil y YFACTOR=0.001."
             ),
         ),
+        # --- Incremento 2: orden y unidades de MOD-04 --------------------- #
+        "espectro-descendente.jdx": jdx_sintetico(
+            "ESPECTRO SINTETICO EN ORDEN DESCENDENTE",
+            PUNTOS_CSV_NORMAL,
+            DESDE,
+            HASTA,
+            nota=(
+                "CA-03.2 - los mismos puntos de espectro-valido.jdx escritos "
+                "de 4000 a 400."
+            ),
+            descendente=True,
+        ),
+        "espectro-porcentaje.csv": csv_sintetico(
+            PUNTOS_CSV_NORMAL,
+            DESDE,
+            HASTA,
+            encabezado="numero de onda,%T",
+            en_porcentaje=True,
+        ),
         "archivo-vacio.csv": b"",
         "binario-disfrazado.csv": binario_disfrazado(),
         "imagen.png": png_minimo(),

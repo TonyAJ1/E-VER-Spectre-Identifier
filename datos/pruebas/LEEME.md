@@ -35,6 +35,8 @@ delata.
 | `espectro-truncado.jdx` | `.jdx` cortado: tiene `##TITLE=` y `##XYDATA=`, le falta `##END=` | CA-02.4 |
 | `espectro-comprimido.jdx` | Los mismos 900 puntos de `espectro-valido.jdx`, guardados en la forma comprimida DIFDUP con XFACTOR y YFACTOR, que es como vienen los archivos de las bases públicas. Sirve para probar la descompresión de MOD-04 sin copiar datos reales | T-08 |
 | `espectro-factores.jdx` | Los mismos 900 puntos con la intensidad multiplicada por mil y `##YFACTOR=0.001`. Si MOD-04 no aplica el factor, los valores salen mil veces más grandes | T-08 |
+| `espectro-descendente.jdx` | Los mismos 900 puntos de `espectro-valido.jdx` escritos de 4000 a 400 cm⁻¹. Procesado tiene que dar exactamente lo mismo que el archivo al derecho | CA-03.2 |
+| `espectro-porcentaje.csv` | Los mismos 900 puntos en transmitancia por ciento, con encabezado `numero de onda,%T` | CA-03.1 |
 | `archivo-vacio.csv` | 0 bytes | CA-02.4 |
 | `binario-disfrazado.csv` | Bytes binarios con cabecera `MZ` y bytes nulos, con extensión admitida. **No es un ejecutable**: no tiene cabecera PE válida ni una sola instrucción. El rechazo debe venir del contenido, no de la extensión | CA-02.5 |
 | `imagen.png` | PNG válido de 1×1 píxel: un formato que la aplicación no admite | CA-01.3 |
