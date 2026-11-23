@@ -1,4 +1,4 @@
-"""MOD-03 · Validador · ¿es de verdad este formato? (T-04)
+"""MOD-03 · Validador · ¿es este formato? (T-04) y ¿cumple los requisitos? (T-05)
 
 Recibe lo que MOD-02 entrega —**contenido como texto**, nombre e indicador de
 tamaño correcto (contrato de la sección 5)— y devuelve un **veredicto**: válido
@@ -26,8 +26,10 @@ con los bytes que no eran texto válido convertidos en el carácter de reemplazo
 
 **Lo que esta tarea no hace:**
 
-- No cuenta puntos ni mira el rango: es T-05. Un espectro de pocos puntos o de
-  rango corto **pasa** T-04, porque su formato sí es el que dice ser.
+- Las capas de T-04 no cuentan puntos ni miran el rango: eso es T-05, más
+  abajo. Un espectro de pocos puntos o de rango corto **pasa** T-04 (la función
+  `revisar_formato`), porque su formato sí es el que dice ser, y lo rechaza
+  `validar`, que corre T-04 y después T-05.
 - No normaliza, no ordena y no convierte: eso es MOD-04 (incremento 2). En
   particular **no se descifran las formas comprimidas de JCAMP-DX** (DIF, SQZ):
   interpretarlas es trabajo de MOD-04 y aquí solo se mira si hay datos y si el
@@ -36,6 +38,17 @@ con los bytes que no eran texto válido convertidos en el carácter de reemplazo
   UT-02, y lo traduce la capa HTTP (T-07) para los rechazos de MOD-02 y de
   MOD-03 en el mismo lugar.
 - No importa MOD-02 ni nada de FastAPI: recibe texto, así se puede probar solo.
+
+**T-05 · dos capas más**, solo si el formato pasó:
+
+4. **Puntos** — al menos `validacion.puntos_minimos` de UT-03 (CA-02.6).
+5. **Rango** — el mínimo y el máximo del número de onda tienen que cubrir
+   `validacion.rango_requerido_cm1` de UT-03 (CA-02.3).
+
+Es una **lectura ligera**. En el `.csv` se recorren todas las filas, se cuentan
+los pares y se toma el mínimo y el máximo de la primera columna. En el `.jdx` se
+leen `##NPOINTS=`, `##FIRSTX=` y `##LASTX=` del **encabezado**, sin descomprimir
+el bloque de datos (eso es MOD-04); si faltan o no se leen, falla cerrado.
 
 **Robustez (CA-02.4):** ninguna entrada hace que este módulo levante una
 excepción. Un archivo vacío, truncado o lleno de basura sale por la puerta del
@@ -74,6 +87,12 @@ CAPA_ESTRUCTURA: str = "estructura"
 
 #: Capa 3 · la estructura está, pero los datos no son coherentes.
 CAPA_COHERENCIA: str = "coherencia"
+
+#: Capa 4 (T-05) · menos puntos que el mínimo de UT-03.
+CAPA_PUNTOS: str = "puntos"
+
+#: Capa 5 (T-05) · el número de onda no cubre el rango de UT-03.
+CAPA_RANGO: str = "rango"
 
 # --------------------------------------------------------------------------- #
 # Parámetros de implementación
@@ -216,7 +235,7 @@ def validar(
     tamano_correcto: bool = True,
     configuracion: Configuracion | None = None,
 ) -> Veredicto:
-    """Decide si el contenido es de verdad del formato que declara el nombre.
+    """El veredicto completo de MOD-03: formato (T-04) y requisitos (T-05).
 
     Args:
         nombre: el nombre que entregó MOD-02 (ya limpio).
@@ -236,7 +255,34 @@ def validar(
     extension = extension_de(nombre)
 
     fallo = _revisar(nombre, contenido, extension, parametros, tamano_correcto)
+    if fallo is None:
+        fallo = _revisar_requisitos(contenido, extension, parametros)
 
+    return _veredicto(nombre, extension, fallo)
+
+
+def revisar_formato(
+    nombre: str,
+    contenido: str,
+    *,
+    tamano_correcto: bool = True,
+    configuracion: Configuracion | None = None,
+) -> Veredicto:
+    """Solo las capas de T-04: «¿es de verdad el formato que declara?».
+
+    No cuenta puntos ni mira el rango. Existe para probar T-04 por separado de
+    T-05 (la «separación clave» del plan); la API usa `validar`.
+    """
+    parametros = configuracion if configuracion is not None else obtener_configuracion()
+    extension = extension_de(nombre)
+
+    fallo = _revisar(nombre, contenido, extension, parametros, tamano_correcto)
+
+    return _veredicto(nombre, extension, fallo)
+
+
+def _veredicto(nombre: str, extension: str | None, fallo: _Fallo | None) -> Veredicto:
+    """Convierte el resultado de las capas en veredicto y lo deja registrado."""
     if fallo is None:
         _registro.info(
             "MOD-03 veredicto | nombre=%s | resultado=%s", nombre, "valido"
@@ -270,6 +316,8 @@ _CODIGO_POR_CAPA: dict[str, str] = {
     CAPA_TEXTO: mensajes.ARCHIVO_NO_ES_TEXTO,
     CAPA_ESTRUCTURA: mensajes.ESTRUCTURA_INVALIDA,
     CAPA_COHERENCIA: mensajes.ESTRUCTURA_INVALIDA,
+    CAPA_PUNTOS: mensajes.PUNTOS_INSUFICIENTES,
+    CAPA_RANGO: mensajes.RANGO_INSUFICIENTE,
 }
 
 
@@ -530,3 +578,159 @@ def _primer_numero_de_onda_plausible(linea: str) -> _Fallo | None:
             "el primer número de onda de los datos no es un valor posible",
         )
     return None
+
+
+# --------------------------------------------------------------------------- #
+# T-05 · capas 4 y 5 · puntos y rango
+# --------------------------------------------------------------------------- #
+
+#: Las tres etiquetas del encabezado JCAMP-DX que lee T-05, ya normalizadas
+#: (sin `##`, sin `=`, sin espacios ni guiones, en mayúsculas). Son parte del
+#: formato, no parámetros de negocio: igual que `##TITLE=` y `##END=` arriba,
+#: la regla no cabe en el JSON de UT-03; los **valores** contra los que se
+#: comparan (puntos mínimos y rango requerido) sí salen de UT-03.
+_JDX_NPOINTS: str = "NPOINTS"
+_JDX_FIRSTX: str = "FIRSTX"
+_JDX_LASTX: str = "LASTX"
+
+#: JCAMP-DX compara etiquetas sin distinguir mayúsculas y sin espacios,
+#: guiones, guiones bajos ni diagonales («##N POINTS=» es «##NPOINTS=»).
+_IGNORADO_EN_ETIQUETAS = re.compile(r"[\s\-_/]")
+
+
+def _revisar_requisitos(
+    contenido: str, extension: str | None, parametros: Configuracion
+) -> _Fallo | None:
+    """Capas 4 y 5. Solo se llega aquí si el formato ya pasó T-04."""
+    if extension == EXTENSION_CSV:
+        medida = _medir_csv(contenido)
+    elif extension == EXTENSION_JDX:
+        medida = _medir_jdx(contenido, parametros)
+    else:  # pragma: no cover - T-04 ya rechazó cualquier otro formato
+        return _Fallo(CAPA_ESTRUCTURA, "formato sin lectura de puntos y rango")
+
+    if isinstance(medida, _Fallo):
+        return medida
+    return _comparar_con_ut03(*medida, parametros)
+
+
+def _comparar_con_ut03(
+    puntos: int, minimo: float, maximo: float, parametros: Configuracion
+) -> _Fallo | None:
+    """Puntos primero y rango después: un rechazo lleva un solo mensaje."""
+    exigidos = parametros.validacion.puntos_minimos
+    if puntos < exigidos:
+        return _Fallo(
+            CAPA_PUNTOS,
+            f"trae {puntos} puntos y UT-03 pide al menos {exigidos}",
+        )
+
+    desde, hasta = parametros.validacion.rango_requerido_cm1
+    if minimo > desde or maximo < hasta:
+        return _Fallo(
+            CAPA_RANGO,
+            f"cubre {minimo:g}–{maximo:g} y UT-03 pide {desde:g}–{hasta:g}",
+        )
+    return None
+
+
+def _medir_csv(contenido: str) -> tuple[int, float, float] | _Fallo:
+    """Recorre **todas** las filas: cuenta pares y toma min/máx del número de onda.
+
+    T-04 solo miró las primeras; aquí una fila rota o un valor imposible en
+    cualquier parte del archivo también es rechazo.
+    """
+    puntos = 0
+    minimo = math.inf
+    maximo = -math.inf
+
+    for fila in _filas_csv(contenido):
+        if isinstance(fila, _Fallo):
+            return fila
+        onda, intensidad = fila
+        if not math.isfinite(onda) or not math.isfinite(intensidad) or onda <= 0:
+            return _Fallo(
+                CAPA_COHERENCIA,
+                "más adelante hay un número de onda o una intensidad que no es "
+                "un valor posible",
+            )
+        puntos += 1
+        minimo = min(minimo, onda)
+        maximo = max(maximo, onda)
+
+    return puntos, minimo, maximo
+
+
+def _medir_jdx(
+    contenido: str, parametros: Configuracion
+) -> tuple[int, float, float] | _Fallo:
+    """Lee `##NPOINTS=`, `##FIRSTX=` y `##LASTX=` del encabezado.
+
+    Solo el encabezado: la lectura se detiene en la etiqueta de datos, y el
+    bloque de datos no se descomprime. Si alguna de las tres falta o no se lee,
+    **falla cerrado** (igual que T-04 con un formato que no sabe revisar).
+    """
+    encabezado = _encabezado_jdx(
+        contenido, parametros.validacion.jcamp_etiquetas_datos_una_de
+    )
+
+    faltantes = [
+        f"##{etiqueta}="
+        for etiqueta in (_JDX_NPOINTS, _JDX_FIRSTX, _JDX_LASTX)
+        if etiqueta not in encabezado
+    ]
+    if faltantes:
+        return _Fallo(
+            CAPA_ESTRUCTURA,
+            f"el encabezado no trae {', '.join(faltantes)}: sin eso no se pueden "
+            "revisar puntos y rango",
+        )
+
+    try:
+        puntos_leidos = float(encabezado[_JDX_NPOINTS])
+        primero = float(encabezado[_JDX_FIRSTX])
+        ultimo = float(encabezado[_JDX_LASTX])
+    except ValueError:
+        return _Fallo(
+            CAPA_ESTRUCTURA,
+            "##NPOINTS=, ##FIRSTX= o ##LASTX= no traen un número",
+        )
+
+    if (
+        not all(math.isfinite(valor) for valor in (puntos_leidos, primero, ultimo))
+        or puntos_leidos <= 0
+        or puntos_leidos != int(puntos_leidos)
+    ):
+        return _Fallo(
+            CAPA_ESTRUCTURA,
+            "##NPOINTS=, ##FIRSTX= o ##LASTX= traen un valor imposible",
+        )
+
+    # El eje puede ir de mayor a menor (4000 → 400): se usan mínimo y máximo.
+    return int(puntos_leidos), min(primero, ultimo), max(primero, ultimo)
+
+
+def _encabezado_jdx(
+    contenido: str, etiquetas_de_datos: tuple[str, ...]
+) -> dict[str, str]:
+    """Las etiquetas del encabezado, normalizadas, con su valor sin comentarios.
+
+    Si una etiqueta se repite, vale la primera.
+    """
+    datos = tuple(etiqueta.upper() for etiqueta in etiquetas_de_datos)
+    encabezado: dict[str, str] = {}
+
+    for linea in contenido.splitlines():
+        limpia = linea.strip()
+        if not limpia.startswith(_PREFIJO_ETIQUETA):
+            continue
+        if limpia.upper().startswith(datos):
+            break
+        etiqueta, igual, valor = limpia[len(_PREFIJO_ETIQUETA) :].partition("=")
+        if not igual:
+            continue
+        normal = _IGNORADO_EN_ETIQUETAS.sub("", etiqueta).upper()
+        sin_comentario = valor.split(_PREFIJO_COMENTARIO, 1)[0].strip()
+        encabezado.setdefault(normal, sin_comentario)
+
+    return encabezado

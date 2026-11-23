@@ -2,8 +2,10 @@
 
 Responde dos preguntas distintas, en dos tareas distintas:
 
-- **T-04 (aquí):** «¿el contenido es de verdad del formato que declara?»
-- **T-05 (pendiente):** «¿cumple los requisitos de puntos y rango?»
+- **T-04:** «¿el contenido es de verdad del formato que declara?»
+  (`revisar_formato`)
+- **T-05:** «¿cumple los requisitos de puntos y rango?» (`validar` corre las
+  dos, en ese orden; es lo que usa la API)
 
 Uso habitual (la orquestación vive en `backend/api/`, T-07):
 
@@ -18,6 +20,8 @@ from backend.validacion.validador import (
     CAPA_COHERENCIA,
     CAPA_ESTRUCTURA,
     CAPA_EXTENSION,
+    CAPA_PUNTOS,
+    CAPA_RANGO,
     CAPA_TAMANO,
     CAPA_TEXTO,
     COLUMNAS_CSV,
@@ -30,6 +34,7 @@ from backend.validacion.validador import (
     SEPARADORES_CSV,
     Veredicto,
     extension_de,
+    revisar_formato,
     validar,
 )
 
@@ -37,6 +42,8 @@ __all__ = [
     "CAPA_COHERENCIA",
     "CAPA_ESTRUCTURA",
     "CAPA_EXTENSION",
+    "CAPA_PUNTOS",
+    "CAPA_RANGO",
     "CAPA_TAMANO",
     "CAPA_TEXTO",
     "COLUMNAS_CSV",
@@ -49,5 +56,6 @@ __all__ = [
     "SEPARADORES_CSV",
     "Veredicto",
     "extension_de",
+    "revisar_formato",
     "validar",
 ]
