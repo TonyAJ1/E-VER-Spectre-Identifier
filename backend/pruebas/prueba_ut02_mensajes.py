@@ -153,6 +153,8 @@ CODIGOS_ESPERADOS = (
     mensajes.ERROR_INTERNO,
     # Agregado por T-08 para la lectura completa de MOD-04.
     mensajes.DATOS_ILEGIBLES,
+    # Agregado por T-11 para la línea plana (CA-03.3).
+    mensajes.SIN_SENAL,
 )
 
 

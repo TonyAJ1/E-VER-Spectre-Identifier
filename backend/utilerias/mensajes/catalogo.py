@@ -67,6 +67,10 @@ ERROR_INTERNO = "ERROR_INTERNO"
 #: de un espectro infrarrojo o un número de puntos que no cuadra (T-08).
 DATOS_ILEGIBLES = "DATOS_ILEGIBLES"
 
+#: La intensidad del espectro es constante, una línea plana, y no hay nada que
+#: analizar (T-11, CA-03.3).
+SIN_SENAL = "SIN_SENAL"
+
 
 class CodigoDesconocido(Exception):
     """Se pidió un código que no está en el catálogo.
@@ -235,6 +239,19 @@ _CATALOGO: dict[str, _Entrada] = {
         accion=lambda c: (
             "Exporte el espectro otra vez, en número de onda y con la "
             "intensidad en transmitancia o absorbancia, y vuelva a subirlo."
+        ),
+    ),
+    # Incremento 2, línea plana (T-11). CA-03.3 pide decir que no hay señal
+    # analizable.
+    SIN_SENAL: _Entrada(
+        titulo="Sin señal analizable",
+        texto=lambda c: (
+            "El espectro no contiene señal analizable: su intensidad es la "
+            "misma en todos los puntos."
+        ),
+        accion=lambda c: (
+            "Revise que exportó la medición correcta y que el equipo registró "
+            "la muestra, y vuelva a subir el archivo."
         ),
     ),
 }

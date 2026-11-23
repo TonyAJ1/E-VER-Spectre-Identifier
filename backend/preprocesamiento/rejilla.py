@@ -54,16 +54,33 @@ def remuestrear(
     return valores, (menor, mayor)
 
 
+#: Qué tan parecidos tienen que ser el valor más alto y el más bajo para
+#: considerar que el espectro es una línea plana. Se mide en proporción al
+#: tamaño de los valores, para que no dependa de la unidad.
+TOLERANCIA_PLANO = 1e-9
+
+
+def es_plano(valores: list[float | None]) -> bool:
+    """Dice si los valores medidos son todos iguales (tarea T-11)."""
+    medidos = [valor for valor in valores if valor is not None]
+    minimo, maximo = min(medidos), max(medidos)
+    escala = max(1.0, abs(minimo), abs(maximo))
+    return maximo - minimo <= TOLERANCIA_PLANO * escala
+
+
 def normalizar(valores: list[float | None]) -> list[float]:
     """Lleva los valores medidos a la escala de 0 a 1.
 
     El más bajo queda en 0 y el más alto en 1. Los puntos sin medición quedan
-    en 0. Si todos los valores son iguales no hay forma de normalizar; ese caso
-    lo atiende T-11 antes de llegar aquí.
+    en 0. Si todos los valores son iguales no hay forma de normalizar: el
+    procesador lo revisa antes con es_plano, y si aun así llega aquí todo
+    queda en cero en lugar de dividir entre cero.
     """
     medidos = [valor for valor in valores if valor is not None]
     minimo, maximo = min(medidos), max(medidos)
     amplitud = maximo - minimo
+    if amplitud == 0:
+        return [0.0 for _ in valores]
     return [
         0.0 if valor is None else (valor - minimo) / amplitud for valor in valores
     ]

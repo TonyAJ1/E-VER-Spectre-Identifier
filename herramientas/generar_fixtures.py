@@ -132,6 +132,9 @@ def generar(carpeta: Path = CARPETA_PRUEBAS) -> list[tuple[str, int]]:
             encabezado="numero de onda,%T",
             en_porcentaje=True,
         ),
+        "espectro-linea-plana.csv": csv_sintetico(
+            PUNTOS_CSV_NORMAL, DESDE, HASTA, valor_fijo=0.5
+        ),
         "archivo-vacio.csv": b"",
         "binario-disfrazado.csv": binario_disfrazado(),
         "imagen.png": png_minimo(),

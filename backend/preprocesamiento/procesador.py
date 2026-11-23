@@ -1,7 +1,8 @@
 """Punto de entrada de MOD-04.
 
 Une los pasos en el orden del plan: leer (T-08), ordenar y pasar a absorbancia
-(T-09), y acomodar en la rejilla fija con intensidad entre 0 y 1 (T-10).
+(T-09), y acomodar en la rejilla fija con intensidad entre 0 y 1 (T-10). Si
+el espectro es una línea plana se avisa que no hay señal analizable (T-11).
 
 Igual que MOD-03, esta función no levanta excepciones por culpa del archivo.
 Si algo sale mal devuelve un resultado no válido con su código de UT-02, y el
@@ -72,6 +73,11 @@ def procesar(
         return _rechazo(
             nombre, mensajes.DATOS_ILEGIBLES, "el espectro no toca la rejilla"
         )
+
+    # T-11: una línea plana no tiene nada que normalizar ni que analizar. Se
+    # avisa con el mensaje de UT-02 en lugar de dividir entre cero.
+    if rejilla.es_plano(valores):
+        return _rechazo(nombre, mensajes.SIN_SENAL, "la intensidad es constante")
 
     espectro = EspectroProcesado(
         eje_cm1=tuple(eje),
