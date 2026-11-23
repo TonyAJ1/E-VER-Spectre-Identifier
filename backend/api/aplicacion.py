@@ -46,6 +46,7 @@ from starlette.datastructures import UploadFile
 
 from backend.manejador_archivos import recibir
 from backend.nucleo import NOMBRE_RAIZ, obtener_registro
+from backend.preprocesamiento.procesador import EspectroProcesado, procesar
 from backend.utilerias import mensajes
 from backend.utilerias.configuracion import Configuracion
 from backend.utilerias.configuracion import obtener as obtener_configuracion
@@ -152,9 +153,35 @@ async def _validar(archivo: UploadFile, parametros: Configuracion) -> JSONRespon
     if not veredicto.valido:
         return _rechazo(veredicto.codigo, parametros)
 
+    # Incremento 2: el archivo aprobado pasa por MOD-04 en la misma petición,
+    # porque no se guarda en ningún lado (RNF-09). Si sus datos no se pueden
+    # leer o es una línea plana, es un rechazo más con su mensaje de UT-02.
+    resultado = procesar(recepcion.nombre, recepcion.contenido, parametros)
+    if not resultado.valido:
+        return _rechazo(resultado.codigo, parametros)
+
     return JSONResponse(
-        {"valido": True, "nombre": recepcion.nombre, "bytes": recepcion.bytes_leidos}
+        {
+            "valido": True,
+            "nombre": recepcion.nombre,
+            "bytes": recepcion.bytes_leidos,
+            "espectro": _espectro_como_json(resultado.espectro),
+        }
     )
+
+
+#: Decimales con que viajan el eje y la intensidad. Seis alcanzan de sobra
+#: para la gráfica y dejan la respuesta en unas pocas decenas de kilobytes.
+_DECIMALES = 6
+
+
+def _espectro_como_json(espectro: EspectroProcesado) -> dict[str, Any]:
+    return {
+        "eje_cm1": [round(valor, _DECIMALES) for valor in espectro.eje_cm1],
+        "intensidad": [round(valor, _DECIMALES) for valor in espectro.intensidad],
+        "rango_medido_cm1": list(espectro.rango_medido_cm1),
+        "unidad_original": espectro.unidad_original,
+    }
 
 
 def _rechazo(codigo: str, parametros: Configuracion) -> JSONResponse:

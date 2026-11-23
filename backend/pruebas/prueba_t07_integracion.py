@@ -84,11 +84,12 @@ def prueba_ca_01_1_el_jdx_valido_se_acepta_con_nombre_y_bytes(
     respuesta = _enviar(cliente, "acetona.jdx", contenido)
 
     assert respuesta.status_code == 200
-    assert respuesta.json() == {
-        "valido": True,
-        "nombre": "acetona.jdx",
-        "bytes": len(contenido),
-    }
+    cuerpo = respuesta.json()
+    # Desde el incremento 2 la respuesta trae además el espectro procesado
+    # (T-12); lo que pide CA-01.1 sigue igual.
+    assert cuerpo["valido"] is True
+    assert cuerpo["nombre"] == "acetona.jdx"
+    assert cuerpo["bytes"] == len(contenido)
 
 
 def prueba_ca_01_2_el_csv_del_tamano_maximo_exacto_se_acepta(

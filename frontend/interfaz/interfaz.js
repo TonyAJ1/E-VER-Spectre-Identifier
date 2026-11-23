@@ -35,6 +35,20 @@
   var nombre = document.getElementById("resultado-nombre");
   var mensaje = document.getElementById("resultado-mensaje");
   var accion = document.getElementById("resultado-accion");
+  var seccionGrafica = document.getElementById("grafica");
+  var lienzoGrafica = document.getElementById("grafica-lienzo");
+
+  // Incremento 2: la gráfica solo existe junto a un archivo aprobado. En
+  // cualquier otro estado se borra, para no dejar una gráfica vieja o vacía.
+  function ocultarGrafica() {
+    window.EVER.visor.limpiar(lienzoGrafica);
+    seccionGrafica.hidden = true;
+  }
+
+  function mostrarGrafica(espectro) {
+    seccionGrafica.hidden = false;
+    window.EVER.visor.dibujar(lienzoGrafica, espectro);
+  }
 
   /** Pinta el área de resultado. Los campos vacíos se ocultan. */
   function mostrar(estado, piezas) {
@@ -45,6 +59,7 @@
     poner(mensaje, piezas.mensaje);
     poner(accion, piezas.accion);
     botonAnalizar.disabled = estado !== "aceptado";
+    ocultarGrafica();
   }
 
   function poner(elemento, texto) {
@@ -59,6 +74,9 @@
         nombre: veredicto.nombre,
         mensaje: TEXTOS.aprobadoMensaje,
       });
+      if (veredicto.espectro) {
+        mostrarGrafica(veredicto.espectro);
+      }
       return;
     }
     mostrar("rechazado", {
@@ -95,6 +113,7 @@
     resultado.hidden = true;
     resultado.dataset.estado = "inicial";
     botonAnalizar.disabled = true;
+    ocultarGrafica();
   });
 
   formulario.addEventListener("submit", function (evento) {

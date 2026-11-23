@@ -14,6 +14,7 @@
   --error-fondo: #fdeceb;
   --inactivo: #9aa3ae;
   --radio: 10px;
+  --grafica-linea: #1f5fbf;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,6 +31,7 @@
     --error: #ff8a80;
     --error-fondo: #3a1715;
     --inactivo: #5c6672;
+    --grafica-linea: #7fb2ff;
   }
 }
 
@@ -158,4 +160,25 @@ input[type="file"]:focus-visible {
     width: auto;
     justify-self: start;
   }
+}
+
+/* Incremento 2: gráfica del espectro (MOD-05). El lienzo toma el ancho de la
+   tarjeta y una altura fija, así cabe en un celular de 360 px sin que la
+   página se desplace a los lados. */
+
+.grafica-titulo {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.grafica-lienzo {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 280px;
+}
+
+.grafica-lienzo canvas {
+  display: block;
+  max-width: 100%;
 }

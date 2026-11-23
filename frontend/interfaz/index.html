@@ -36,6 +36,13 @@
       <p id="resultado-accion" class="resultado-accion"></p>
     </section>
 
+    <!-- Incremento 2: la gráfica de MOD-05. Solo aparece cuando el archivo
+         se aprobó y MOD-04 lo procesó; con un rechazo se borra y se oculta. -->
+    <section id="grafica" class="tarjeta grafica" hidden>
+      <h2 class="grafica-titulo">Espectro</h2>
+      <div id="grafica-lienzo" class="grafica-lienzo"></div>
+    </section>
+
     <!-- D-4: «Analizar» está presente; se habilita al aprobar el archivo y
          todavía no hace nada (RF-04 llega en el incremento 3). -->
     <button id="boton-analizar" class="boton boton-analizar" type="button" disabled>
@@ -43,6 +50,8 @@
     </button>
   </main>
 
+  <script src="../visor-espectro/libreria/chart.umd.js"></script>
+  <script src="../visor-espectro/visor.js"></script>
   <script src="../servicios/validacion.js"></script>
   <script src="interfaz.js"></script>
 </body>
