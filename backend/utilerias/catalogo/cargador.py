@@ -21,6 +21,7 @@ from typing import Any
 RAIZ = Path(__file__).resolve().parents[3]
 CARPETA_CATALOGO = RAIZ / "datos" / "catalogo"
 RUTA_GRUPOS = CARPETA_CATALOGO / "grupos.json"
+RUTA_PLANTILLAS = CARPETA_CATALOGO / "plantillas.json"
 
 #: La lista cerrada de Requerimientos V3: siete grupos, ni uno más ni uno menos.
 IDS_ESPERADOS = ("GF-01", "GF-02", "GF-03", "GF-04", "GF-05", "GF-06", "GF-07")
@@ -204,3 +205,63 @@ def obtener() -> Catalogo:
     if _catalogo is None:
         _catalogo = cargar()
     return _catalogo
+
+
+# Plantillas de explicación (tarea T-20)
+#
+# Viven aparte del catálogo para que un grupo sin plantilla no impida
+# arrancar: ese caso lo cubre MOD-07 con «Explicación no disponible» (T-22).
+# Lo que sí impide arrancar es un archivo roto o una plantilla de un grupo que
+# no existe.
+
+
+@dataclass(frozen=True)
+class Plantilla:
+    grupo: str
+    por_que: str
+    fuentes: tuple[str, ...]
+    revisado_por: str | None
+
+
+def cargar_plantillas(ruta: Path | str | None = None) -> dict[str, Plantilla]:
+    ruta_final = Path(ruta) if ruta is not None else RUTA_PLANTILLAS
+    if not ruta_final.is_file():
+        raise _error("no se encontraron las plantillas de explicación", ruta_final)
+    try:
+        datos = json.loads(ruta_final.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise _error("las plantillas no se pudieron leer como JSON", ruta_final) from error
+
+    lista = datos.get("plantillas") if isinstance(datos, dict) else None
+    if not isinstance(lista, list):
+        raise _error("falta la lista «plantillas»", ruta_final)
+
+    plantillas: dict[str, Plantilla] = {}
+    for entrada in lista:
+        if not isinstance(entrada, dict):
+            raise _error("cada plantilla tiene que ser un objeto", ruta_final)
+        grupo = _texto(entrada, "grupo", "una plantilla", ruta_final)
+        if grupo not in IDS_ESPERADOS:
+            raise _error(f"hay una plantilla para {grupo}, que no está en el catálogo", ruta_final)
+        if grupo in plantillas:
+            raise _error(f"el grupo {grupo} tiene dos plantillas", ruta_final)
+        fuentes = entrada.get("fuentes", [])
+        revisor = entrada.get("revisado_por")
+        plantillas[grupo] = Plantilla(
+            grupo=grupo,
+            por_que=_texto(entrada, "por_que", f"la plantilla de {grupo}", ruta_final),
+            fuentes=tuple(f for f in fuentes if isinstance(f, str)),
+            revisado_por=revisor if isinstance(revisor, str) and revisor.strip() else None,
+        )
+    return plantillas
+
+
+_plantillas: dict[str, Plantilla] | None = None
+
+
+def obtener_plantillas() -> dict[str, Plantilla]:
+    """Las plantillas, leídas la primera vez y guardadas en memoria."""
+    global _plantillas
+    if _plantillas is None:
+        _plantillas = cargar_plantillas()
+    return _plantillas
