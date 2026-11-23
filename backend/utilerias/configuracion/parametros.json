@@ -10,6 +10,11 @@
     "jcamp_etiquetas_obligatorias": ["##TITLE=", "##JCAMP-DX=", "##XUNITS=", "##YUNITS=", "##END="],
     "jcamp_etiquetas_datos_una_de": ["##XYDATA=", "##PEAK TABLE="]
   },
+  "procesamiento": {
+    "_nota": "MOD-04 (incremento 2). La rejilla de 1024 puntos es un SUPUESTO: el diseño de MOD-06 solo la da como ejemplo.",
+    "puntos_rejilla": 1024,
+    "rango_rejilla_cm1": [400, 4000]
+  },
   "motor": {
     "_nota": "Se usan a partir del incremento 3 (MOD-06).",
     "umbral_confianza": 0.6,

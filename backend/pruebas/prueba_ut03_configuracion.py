@@ -130,6 +130,8 @@ LLAVES_OBLIGATORIAS = [
     ("validacion", "rango_requerido_cm1"),
     ("validacion", "jcamp_etiquetas_obligatorias"),
     ("validacion", "jcamp_etiquetas_datos_una_de"),
+    ("procesamiento", "puntos_rejilla"),
+    ("procesamiento", "rango_rejilla_cm1"),
 ]
 
 
@@ -150,7 +152,7 @@ def prueba_falta_una_llave_obligatoria_y_no_arranca(
     assert "Corrija" in mensaje
 
 
-@pytest.mark.parametrize("bloque", ["archivo", "validacion"])
+@pytest.mark.parametrize("bloque", ["archivo", "validacion", "procesamiento"])
 def prueba_falta_un_bloque_completo_y_no_arranca(tmp_path: Path, bloque: str) -> None:
     datos = _datos_del_repositorio()
     del datos[bloque]
@@ -187,6 +189,9 @@ CASOS_INCOHERENTES = [
         _con("validacion", "jcamp_etiquetas_obligatorias", ["##TITLE=", "  "]),
     ),
     ("etiquetas de datos vacías", _con("validacion", "jcamp_etiquetas_datos_una_de", [])),
+    ("rejilla de un solo punto", _con("procesamiento", "puntos_rejilla", 1)),
+    ("rejilla decimal", _con("procesamiento", "puntos_rejilla", 1024.5)),
+    ("rejilla invertida", _con("procesamiento", "rango_rejilla_cm1", [4000, 400])),
 ]
 
 

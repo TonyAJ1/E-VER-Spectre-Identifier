@@ -72,11 +72,24 @@ class ParametrosValidacion:
 
 
 @dataclass(frozen=True)
+class ParametrosProcesamiento:
+    """Parámetros que usa MOD-04 (procesador de espectros) desde el incremento 2.
+
+    La rejilla es el contrato con MOD-05 y MOD-06: todo espectro sale con
+    puntos_rejilla valores, repartidos de forma pareja en rango_rejilla_cm1.
+    """
+
+    puntos_rejilla: int
+    rango_rejilla_cm1: tuple[float, float]
+
+
+@dataclass(frozen=True)
 class Configuracion:
     """Los parámetros ya validados, listos para usarse."""
 
     archivo: ParametrosArchivo
     validacion: ParametrosValidacion
+    procesamiento: ParametrosProcesamiento
     ruta: Path
 
 
@@ -241,6 +254,7 @@ def cargar(ruta: Path | str | None = None) -> Configuracion:
 
     bloque_archivo = _bloque(datos, "archivo", ruta_final)
     bloque_validacion = _bloque(datos, "validacion", ruta_final)
+    bloque_procesamiento = _bloque(datos, "procesamiento", ruta_final)
 
     parametros_archivo = ParametrosArchivo(
         tamano_maximo_bytes=_entero_positivo(
@@ -271,9 +285,26 @@ def cargar(ruta: Path | str | None = None) -> Configuracion:
         ),
     )
 
+    puntos_rejilla = _entero_positivo(
+        bloque_procesamiento, "puntos_rejilla", ruta_final, "procesamiento"
+    )
+    if puntos_rejilla < 2:
+        raise _error(
+            "«procesamiento.puntos_rejilla» necesita al menos dos puntos para "
+            "formar un eje",
+            ruta_final,
+        )
+    parametros_procesamiento = ParametrosProcesamiento(
+        puntos_rejilla=puntos_rejilla,
+        rango_rejilla_cm1=_rango(
+            bloque_procesamiento, "rango_rejilla_cm1", ruta_final, "procesamiento"
+        ),
+    )
+
     return Configuracion(
         archivo=parametros_archivo,
         validacion=parametros_validacion,
+        procesamiento=parametros_procesamiento,
         ruta=ruta_final,
     )
 
