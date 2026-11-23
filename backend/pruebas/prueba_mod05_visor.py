@@ -12,17 +12,14 @@ evidencia.
 
 from __future__ import annotations
 
-import socket
-import threading
-import time
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-import uvicorn
 from fastapi.testclient import TestClient
 
 from backend.api.aplicacion import RUTA_VALIDAR, crear_aplicacion
+from backend.pruebas.apoyo_navegador import subir_en_la_pagina as subir
 from backend.utilerias.configuracion import obtener as obtener_configuracion
 
 TITULO_EJE_X = "Número de onda (cm⁻¹)"
@@ -32,44 +29,6 @@ TITULO_EJE_X = "Número de onda (cm⁻¹)"
 def cliente() -> Iterator[TestClient]:
     with TestClient(crear_aplicacion()) as cliente_http:
         yield cliente_http
-
-
-def _puerto_libre() -> int:
-    with socket.socket() as zocalo:
-        zocalo.bind(("127.0.0.1", 0))
-        return zocalo.getsockname()[1]
-
-
-@pytest.fixture(scope="module")
-def servidor() -> Iterator[str]:
-    puerto = _puerto_libre()
-    servidor = uvicorn.Server(
-        uvicorn.Config(crear_aplicacion(), host="127.0.0.1", port=puerto, log_level="warning")
-    )
-    hilo = threading.Thread(target=servidor.run, daemon=True)
-    hilo.start()
-    limite = time.monotonic() + 15
-    while not servidor.started:
-        if time.monotonic() > limite:  # pragma: no cover
-            pytest.fail("el servidor no arrancó en 15 s")
-        time.sleep(0.05)
-    yield f"http://127.0.0.1:{puerto}"
-    servidor.should_exit = True
-    hilo.join(timeout=10)
-
-
-def subir(pagina, base: str, ruta: Path, nombre: str) -> None:
-    pagina.goto(base + "/")
-    pagina.set_input_files(
-        "#archivo",
-        files=[{"name": nombre, "mimeType": "application/octet-stream",
-                "buffer": ruta.read_bytes()}],
-    )
-    pagina.click("#boton-validar")
-    pagina.wait_for_function(
-        "['aceptado','rechazado','error'].includes("
-        "document.getElementById('resultado').dataset.estado)"
-    )
 
 
 def opciones_de_la_grafica(pagina) -> dict | None:

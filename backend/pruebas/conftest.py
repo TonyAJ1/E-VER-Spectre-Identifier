@@ -164,3 +164,43 @@ def evidencia(request: pytest.FixtureRequest, tmp_path: Path):
         return ruta
 
     return guardar
+
+
+# Servidor real para las pruebas de la gráfica (incremento 2)
+
+
+@pytest.fixture(scope="module")
+def servidor():
+    """La aplicación completa en uvicorn, en un hilo y en un puerto libre.
+
+    La usan las pruebas de MOD-05, que necesitan la API, MOD-04 y la página
+    juntas en un navegador de verdad.
+    """
+    import socket
+    import threading
+    import time
+
+    import uvicorn
+
+    from backend.api.aplicacion import crear_aplicacion
+
+    with socket.socket() as zocalo:
+        zocalo.bind(("127.0.0.1", 0))
+        puerto = zocalo.getsockname()[1]
+
+    servidor_http = uvicorn.Server(
+        uvicorn.Config(
+            crear_aplicacion(), host="127.0.0.1", port=puerto, log_level="warning"
+        )
+    )
+    hilo = threading.Thread(target=servidor_http.run, daemon=True)
+    hilo.start()
+    limite = time.monotonic() + 15
+    while not servidor_http.started:
+        if time.monotonic() > limite:  # pragma: no cover - depende de la máquina
+            pytest.fail("el servidor no arrancó en 15 segundos")
+        time.sleep(0.05)
+    yield f"http://127.0.0.1:{puerto}"
+    servidor_http.should_exit = True
+    hilo.join(timeout=10)
+

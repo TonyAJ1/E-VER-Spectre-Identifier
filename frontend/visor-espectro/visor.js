@@ -105,7 +105,17 @@
             min: menor,
             max: mayor,
             title: { display: true, text: TEXTOS.ejeHorizontal, color: tono.texto },
-            ticks: { color: tono.texto, maxTicksLimit: 6, maxRotation: 0 },
+            // En un celular de 360 px caben pocas etiquetas. Se limitan, no
+            // se giran y se escriben sin separador de miles para que se lean.
+            ticks: {
+              color: tono.texto,
+              maxTicksLimit: 6,
+              maxRotation: 0,
+              autoSkipPadding: 8,
+              callback: function (valor) {
+                return String(Math.round(valor));
+              },
+            },
             grid: { color: tono.reticula },
           },
           y: {
