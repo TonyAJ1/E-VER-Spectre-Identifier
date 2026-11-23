@@ -18,7 +18,9 @@ con los bytes que no eran texto válido convertidos en el carácter de reemplazo
 2. **¿La estructura es la del formato declarado?** — `.jdx`: las etiquetas
    obligatorias de UT-03, con `##TITLE=` en la primera línea y `##END=` en la
    última, más una de las etiquetas de datos. `.csv`: las primeras filas
-   parsean como pares numéricos separados por coma.
+   parsean como pares numéricos, separados por coma o por punto y coma (con
+   este último, el decimal puede venir con coma), con una fila de encabezado
+   opcional (Requerimientos §6.1).
 3. **Coherencia mínima** — que haya datos y que los números de onda sean
    positivos y utilizables.
 
@@ -44,6 +46,7 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from backend.nucleo import obtener_registro
@@ -92,8 +95,24 @@ FILAS_MINIMAS: int = 2
 #: Un par es «número de onda, intensidad»: dos columnas, ni una más.
 COLUMNAS_CSV: int = 2
 
-#: El separador del `.csv`, según el plan (sección 8, T-04).
+#: Los separadores que admite el `.csv`: coma o punto y coma (Requerimientos
+#: §6.1; plan, sección 8, T-04). Se decide **una vez por archivo**, con la
+#: primera fila: si trae punto y coma, el archivo es «de punto y coma».
 SEPARADOR_CSV: str = ","
+SEPARADOR_CSV_PUNTO_Y_COMA: str = ";"
+SEPARADORES_CSV: tuple[str, ...] = (SEPARADOR_CSV, SEPARADOR_CSV_PUNTO_Y_COMA)
+
+#: Con separador `;` el decimal puede venir con coma (Excel en español:
+#: `400,0;0,805`). Con separador `,` el decimal es siempre punto: la coma ya
+#: está ocupada.
+_COMA_DECIMAL: str = ","
+_PUNTO_DECIMAL: str = "."
+
+#: Cómo se reconoce la **fila de encabezado opcional** (§6.1): es la primera
+#: fila, no se lee como par de números y trae al menos una letra
+#: («onda,intensidad», «cm-1;T»). Una fila sin letras que no parsea —«400.0,»—
+#: no es encabezado: es una fila de datos rota.
+_LETRA = re.compile(r"[^\W\d_]")
 
 #: Los dos formatos que MOD-03 sabe revisar hoy. UT-03 decide cuáles se
 #: *admiten*; esto es lo que este módulo sabe *inspeccionar*. Si UT-03 admite
@@ -305,32 +324,16 @@ def _revisar_csv(contenido: str) -> _Fallo | None:
     """Las primeras filas tienen que ser pares «número de onda, intensidad».
 
     Una fila con una sola columna, con tres, con un campo vacío o con texto
-    (incluido un encabezado como «onda,intensidad») significa que el archivo no
-    es el CSV de dos columnas que el formato pide.
+    significa que el archivo no es el CSV de dos columnas que el formato pide.
+    La única fila con texto que se admite es el **encabezado opcional**, y solo
+    si es la primera (§6.1).
     """
     pares: list[tuple[float, float]] = []
 
-    for linea in contenido.splitlines():
-        if not linea.strip():
-            continue
-
-        campos = [campo.strip() for campo in linea.split(SEPARADOR_CSV)]
-        if len(campos) != COLUMNAS_CSV:
-            return _Fallo(
-                CAPA_ESTRUCTURA,
-                "una de las primeras filas no trae dos columnas separadas por "
-                "coma",
-            )
-        try:
-            onda = float(campos[0])
-            intensidad = float(campos[1])
-        except ValueError:
-            return _Fallo(
-                CAPA_ESTRUCTURA,
-                "una de las primeras filas no trae un par de números",
-            )
-
-        pares.append((onda, intensidad))
+    for fila in _filas_csv(contenido):
+        if isinstance(fila, _Fallo):
+            return fila
+        pares.append(fila)
         if len(pares) >= FILAS_A_REVISAR:
             break
 
@@ -338,6 +341,64 @@ def _revisar_csv(contenido: str) -> _Fallo | None:
         return _Fallo(CAPA_ESTRUCTURA, "el archivo no trae ni una fila de datos")
 
     return _coherencia(pares)
+
+
+def _filas_csv(contenido: str) -> Iterator[tuple[float, float] | _Fallo]:
+    """Recorre el `.csv` y entrega sus pares, o el primer fallo que encuentre.
+
+    Es el único lugar que sabe leer una fila: T-04 se queda con las primeras y
+    T-05 las recorre todas, así que las dos tareas ven el archivo igual.
+
+    - Las líneas en blanco se saltan.
+    - El separador se decide con la primera fila (encabezado incluido).
+    - La primera fila puede ser un encabezado de texto, y se salta.
+    - Después del primer fallo no se entrega nada más.
+    """
+    separador: str | None = None
+    es_la_primera = True
+
+    for linea in contenido.splitlines():
+        if not linea.strip():
+            continue
+
+        if separador is None:
+            separador = (
+                SEPARADOR_CSV_PUNTO_Y_COMA
+                if SEPARADOR_CSV_PUNTO_Y_COMA in linea
+                else SEPARADOR_CSV
+            )
+
+        campos = [campo.strip() for campo in linea.split(separador)]
+        par = _como_par(campos, separador)
+
+        if par is None and es_la_primera and _LETRA.search(linea):
+            es_la_primera = False
+            continue  # encabezado opcional
+        es_la_primera = False
+
+        if len(campos) != COLUMNAS_CSV:
+            yield _Fallo(
+                CAPA_ESTRUCTURA,
+                "una fila no trae dos columnas separadas por coma o punto y coma",
+            )
+            return
+        if par is None:
+            yield _Fallo(CAPA_ESTRUCTURA, "una fila no trae un par de números")
+            return
+
+        yield par
+
+
+def _como_par(campos: list[str], separador: str) -> tuple[float, float] | None:
+    """Los dos campos como números, o ``None`` si no lo son."""
+    if len(campos) != COLUMNAS_CSV:
+        return None
+    if separador == SEPARADOR_CSV_PUNTO_Y_COMA:
+        campos = [campo.replace(_COMA_DECIMAL, _PUNTO_DECIMAL) for campo in campos]
+    try:
+        return float(campos[0]), float(campos[1])
+    except ValueError:
+        return None
 
 
 def _coherencia(pares: list[tuple[float, float]]) -> _Fallo | None:

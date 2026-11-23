@@ -433,10 +433,13 @@ def prueba_un_formato_permitido_que_mod_03_no_sabe_revisar_se_rechaza() -> None:
 @pytest.mark.parametrize(
     ("caso", "contenido"),
     [
-        ("texto en vez de números", "onda,intensidad\n400.0,0.80\n"),
+        ("texto en vez de números", "400.0,0.80\nonda,intensidad\n"),
+        ("encabezado y nada más", "onda,intensidad\n"),
+        ("dos encabezados", "onda,intensidad\ncm-1,T\n400.0,0.80\n"),
         ("una sola columna", "400.0\n500.0\n600.0\n"),
         ("tres columnas", "400.0,0.80,extra\n500.0,0.75,extra\n"),
-        ("separado con punto y coma", "400.0;0.80\n500.0;0.75\n"),
+        ("punto y coma con tres campos", "400,0;0,80;1\n500,0;0,75;1\n"),
+        ("separadores mezclados", "400.0;0.80\n500.0,0.75\n"),
         ("columna vacía", "400.0,\n500.0,\n"),
         ("solo comas", ",\n,\n"),
     ],
@@ -446,6 +449,42 @@ def prueba_al_csv_no_le_salen_los_pares_y_se_rechaza(caso: str, contenido: str) 
 
     assert not veredicto.valido, caso
     assert veredicto.codigo == mensajes.ESTRUCTURA_INVALIDA, caso
+
+
+# --- Requerimientos §6.1: separador coma o punto y coma, encabezado opcional --- #
+
+
+@pytest.mark.parametrize(
+    ("caso", "contenido"),
+    [
+        ("separado con punto y coma", "400.0;0.80\n500.0;0.75\n"),
+        ("punto y coma con coma decimal (Excel en español)", "400,0;0,805\n500,0;0,750\n"),
+        ("encabezado con coma", "onda,intensidad\n400.0,0.80\n500.0,0.75\n"),
+        ("encabezado con punto y coma", "Numero de onda (cm-1);T\n400,0;0,80\n500,0;0,75\n"),
+        ("encabezado tras líneas en blanco", "\n\nonda,intensidad\n400.0,0.80\n500.0,0.75\n"),
+    ],
+)
+def prueba_el_csv_admite_lo_que_pide_la_seccion_6_1(caso: str, contenido: str) -> None:
+    """Rechazar un encabezado válido o el `;` sería incumplir Requerimientos §6.1."""
+    veredicto = validar("espectro.csv", contenido)
+
+    assert veredicto.valido, f"{caso}: {veredicto.detalle}"
+
+
+def prueba_el_encabezado_no_cuenta_como_fila_de_datos() -> None:
+    """Encabezado más un solo par sigue siendo un espectro de un punto."""
+    veredicto = validar("espectro.csv", "onda,intensidad\n400.0,0.80\n")
+
+    assert not veredicto.valido
+    assert veredicto.capa == CAPA_COHERENCIA
+
+
+def prueba_con_punto_y_coma_la_coma_es_decimal() -> None:
+    """`-400,0;0,80` es un número de onda negativo, no un campo de más."""
+    veredicto = validar("espectro.csv", "-400,0;0,80\n500,0;0,75\n")
+
+    assert not veredicto.valido
+    assert veredicto.capa == CAPA_COHERENCIA
 
 
 def prueba_el_csv_tolera_espacios_alrededor_de_los_numeros() -> None:
@@ -576,7 +615,7 @@ def prueba_el_texto_se_revisa_antes_que_la_estructura() -> None:
 
 
 def prueba_la_estructura_se_revisa_antes_que_la_coherencia() -> None:
-    veredicto = validar("espectro.csv", "sin pares\n-400.0,0.80\n")
+    veredicto = validar("espectro.csv", "-400.0,0.80\nsin pares\n")
 
     assert veredicto.capa == CAPA_ESTRUCTURA
 
