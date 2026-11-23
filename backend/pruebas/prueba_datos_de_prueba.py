@@ -54,6 +54,8 @@ ESPERADOS = (
     "espectro-un-punto-menos.csv",
     "espectro-rango-corto.csv",
     "espectro-truncado.jdx",
+    "espectro-comprimido.jdx",
+    "espectro-factores.jdx",
     "archivo-vacio.csv",
     "binario-disfrazado.csv",
     "imagen.png",

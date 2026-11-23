@@ -33,6 +33,8 @@ delata.
 | `espectro-un-punto-menos.csv` | CSV con **un punto menos** que el mínimo (hoy 299). Cubre el rango de sobra, para que el conteo sea la única razón posible de rechazo | CA-02.6 |
 | `espectro-rango-corto.csv` | CSV de 900 puntos que arranca en 1500 cm⁻¹: no alcanza el extremo inferior del rango requerido. Puntos de sobra, así que el rango es la única razón de rechazo | CA-02.3 |
 | `espectro-truncado.jdx` | `.jdx` cortado: tiene `##TITLE=` y `##XYDATA=`, le falta `##END=` | CA-02.4 |
+| `espectro-comprimido.jdx` | Los mismos 900 puntos de `espectro-valido.jdx`, guardados en la forma comprimida DIFDUP con XFACTOR y YFACTOR, que es como vienen los archivos de las bases públicas. Sirve para probar la descompresión de MOD-04 sin copiar datos reales | T-08 |
+| `espectro-factores.jdx` | Los mismos 900 puntos con la intensidad multiplicada por mil y `##YFACTOR=0.001`. Si MOD-04 no aplica el factor, los valores salen mil veces más grandes | T-08 |
 | `archivo-vacio.csv` | 0 bytes | CA-02.4 |
 | `binario-disfrazado.csv` | Bytes binarios con cabecera `MZ` y bytes nulos, con extensión admitida. **No es un ejecutable**: no tiene cabecera PE válida ni una sola instrucción. El rechazo debe venir del contenido, no de la extensión | CA-02.5 |
 | `imagen.png` | PNG válido de 1×1 píxel: un formato que la aplicación no admite | CA-01.3 |

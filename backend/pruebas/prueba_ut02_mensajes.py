@@ -151,6 +151,8 @@ CODIGOS_ESPERADOS = (
     # Agregados por T-07 para la capa HTTP (contrato D-5 de la sección 5).
     mensajes.ARCHIVO_NO_RECIBIDO,
     mensajes.ERROR_INTERNO,
+    # Agregado por T-08 para la lectura completa de MOD-04.
+    mensajes.DATOS_ILEGIBLES,
 )
 
 

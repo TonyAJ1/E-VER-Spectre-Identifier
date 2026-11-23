@@ -33,6 +33,8 @@ from herramientas.generador_espectros import (
     binario_disfrazado,
     csv_de_tamano_exacto,
     csv_sintetico,
+    jdx_comprimido,
+    jdx_con_factores,
     jdx_sintetico,
     png_minimo,
 )
@@ -88,6 +90,28 @@ def generar(carpeta: Path = CARPETA_PRUEBAS) -> list[tuple[str, int]]:
             HASTA,
             nota="CA-02.4 - a este archivo le falta la etiqueta de cierre.",
             con_end=False,
+        ),
+        # --- Incremento 2: lectura de MOD-04 ------------------------------ #
+        "espectro-comprimido.jdx": jdx_comprimido(
+            "ESPECTRO SINTETICO COMPRIMIDO",
+            PUNTOS_CSV_NORMAL,
+            DESDE,
+            HASTA,
+            nota=(
+                "T-08 - los mismos puntos de espectro-valido.jdx guardados en "
+                "forma DIFDUP con XFACTOR y YFACTOR, como los archivos de "
+                "las bases publicas."
+            ),
+        ),
+        "espectro-factores.jdx": jdx_con_factores(
+            "ESPECTRO SINTETICO CON FACTORES",
+            PUNTOS_CSV_NORMAL,
+            DESDE,
+            HASTA,
+            nota=(
+                "T-08 - los mismos puntos de espectro-valido.jdx con las "
+                "intensidades multiplicadas por mil y YFACTOR=0.001."
+            ),
         ),
         "archivo-vacio.csv": b"",
         "binario-disfrazado.csv": binario_disfrazado(),
