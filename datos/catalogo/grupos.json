@@ -1,0 +1,111 @@
+{
+  "_descripcion": "UT-01. Catálogo de los 7 grupos funcionales (lista cerrada de Requerimientos V3, sección 6.2, y diseño de MOD-06, sección 4). Es la única fuente de regiones y rasgos para el motor, la capa educativa y el reporte. Se lee en solo lectura.",
+  "_fuentes": "Requerimientos V3 sección 6.2; University of Colorado Boulder, Table of Characteristic IR Absorptions; LibreTexts, Infrared Spectroscopy.",
+  "_regla": "El bloque regla de cada grupo lo usa la vía de reglas de MOD-06. Los números de prominencia y ancho son SUPUESTOS iniciales: se tienen que calibrar con los espectros reales de referencia.",
+  "grupos": [
+    {
+      "id": "GF-01",
+      "nombre": "O–H",
+      "familias": "alcoholes, fenoles y ácidos carboxílicos",
+      "enlace": "estiramiento O–H",
+      "region_cm1": [3200, 3550],
+      "regiones_alternas": [
+        {"nombre": "ácidos carboxílicos", "region_cm1": [2500, 3300]}
+      ],
+      "intensidad": "fuerte",
+      "forma": "ancha",
+      "rasgo": "Banda ancha e intensa por puentes de hidrógeno.",
+      "regla": {
+        "prominencia_referencia": 0.25,
+        "ancho_minimo_cm1": 150
+      }
+    },
+    {
+      "id": "GF-02",
+      "nombre": "N–H",
+      "familias": "aminas y amidas",
+      "enlace": "estiramiento N–H",
+      "region_cm1": [3300, 3500],
+      "regiones_alternas": [],
+      "intensidad": "media",
+      "forma": "angosta",
+      "rasgo": "Bandas medias, más angostas que la de O–H; dos picos en aminas primarias y uno en secundarias.",
+      "regla": {
+        "prominencia_referencia": 0.12,
+        "ancho_maximo_cm1": 150
+      }
+    },
+    {
+      "id": "GF-03",
+      "nombre": "C–H alifático (sp³)",
+      "familias": "alcanos y cadenas alifáticas",
+      "enlace": "estiramiento C–H",
+      "region_cm1": [2850, 2960],
+      "regiones_alternas": [],
+      "intensidad": "media",
+      "forma": "aguda",
+      "rasgo": "Picos agudos justo por debajo de 3000 cm⁻¹.",
+      "regla": {
+        "prominencia_referencia": 0.12
+      }
+    },
+    {
+      "id": "GF-04",
+      "nombre": "C≡N",
+      "familias": "nitrilos",
+      "enlace": "estiramiento C≡N",
+      "region_cm1": [2210, 2260],
+      "regiones_alternas": [],
+      "intensidad": "media",
+      "forma": "aguda",
+      "rasgo": "Pico agudo de intensidad media en una zona casi siempre vacía.",
+      "regla": {
+        "prominencia_referencia": 0.12
+      }
+    },
+    {
+      "id": "GF-05",
+      "nombre": "C=O",
+      "familias": "carbonilos: cetonas, aldehídos, ésteres, ácidos y amidas",
+      "enlace": "estiramiento C=O",
+      "region_cm1": [1670, 1780],
+      "regiones_alternas": [],
+      "intensidad": "fuerte",
+      "forma": "aguda",
+      "rasgo": "Pico muy intenso y agudo; suele ser la señal más evidente del espectro.",
+      "regla": {
+        "prominencia_referencia": 0.3
+      }
+    },
+    {
+      "id": "GF-06",
+      "nombre": "C=C",
+      "familias": "alquenos",
+      "enlace": "estiramiento C=C",
+      "region_cm1": [1620, 1680],
+      "regiones_alternas": [],
+      "intensidad": "débil a media",
+      "forma": "aguda",
+      "rasgo": "Pico débil a medio, acompañado de C–H por encima de 3000 cm⁻¹.",
+      "regla": {
+        "prominencia_referencia": 0.06,
+        "acompanante": {"nombre": "=C–H", "region_cm1": [3020, 3100], "prominencia_referencia": 0.04}
+      }
+    },
+    {
+      "id": "GF-07",
+      "nombre": "Anillo aromático",
+      "familias": "compuestos aromáticos",
+      "enlace": "estiramiento C=C del anillo",
+      "region_cm1": [1450, 1600],
+      "regiones_alternas": [],
+      "intensidad": "media",
+      "forma": "par de bandas",
+      "rasgo": "Par de bandas cerca de 1600 y 1500 cm⁻¹ junto con C–H aromático por encima de 3000 cm⁻¹.",
+      "regla": {
+        "prominencia_referencia": 0.1,
+        "acompanante": {"nombre": "C–H aromático", "region_cm1": [3000, 3100], "prominencia_referencia": 0.04}
+      }
+    }
+  ]
+}
