@@ -24,7 +24,7 @@ Python + FastAPI (backend) · HTML/CSS/JS puro (frontend) · sin base de datos.
 ```
 frontend/              Zona de presentación (MOD-01 interfaz, MOD-05 visor)
 backend/               Zona de procesamiento (MOD-02, 03, 04, 07, 08 y utilerías UT-01/02/03)
-motor-identificacion/  MOD-06 · zona aislada (reglas, modelo, inferencia)
+motor_identificacion/  MOD-06 · zona aislada (reglas, modelo, inferencia)
 datos/                 Catálogo de grupos, archivos de prueba y espectros de referencia
                        (no hay datos de usuarios)
 herramientas/          Apoyo fuera de la aplicación: generar archivos de prueba, descargar espectros

@@ -36,7 +36,7 @@ Si algo en el código contradice estos documentos, **detente y pregunta**; no lo
 | MOD-03 | Validador | `backend/validacion/` |
 | MOD-04 | Procesador de espectros | `backend/preprocesamiento/` |
 | MOD-05 | Visualizador de espectro | `frontend/visor-espectro/` |
-| MOD-06 | Motor de identificación (aislado) | `motor-identificacion/` |
+| MOD-06 | Motor de identificación (aislado) | `motor_identificacion/` |
 | MOD-07 | Capa educativa | `backend/educativo/` |
 | MOD-08 | Generador de reportes | `backend/reportes/` |
 | UT-01 | Catálogo de grupos funcionales | `backend/utilerias/catalogo/` + `datos/catalogo/` |
@@ -51,7 +51,7 @@ nunca se commitean (D-8).
 
 **Nombres de carpeta (D-7):** las carpetas que Python importa como paquete usan **guion bajo**,
 porque un guion no es identificador válido y `import` sobre ellas es error de sintaxis. Por eso
-`backend/manejador_archivos/`; `motor-identificacion/` se renombra igual al llegar al incremento 3.
+`backend/manejador_archivos/` y `motor_identificacion/` (renombrada en el incremento 3).
 Las carpetas del frontend (`interfaz/`, `servicios/`, `visor-espectro/`) conservan el guion.
 
 ## Reglas que no se rompen
