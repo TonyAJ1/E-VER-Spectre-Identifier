@@ -155,6 +155,9 @@ CODIGOS_ESPERADOS = (
     mensajes.DATOS_ILEGIBLES,
     # Agregado por T-11 para la línea plana (CA-03.3).
     mensajes.SIN_SENAL,
+    # Agregados por T-19 para los resultados del motor.
+    mensajes.SIN_DETECCIONES,
+    mensajes.ANALISIS_FALLIDO,
 )
 
 

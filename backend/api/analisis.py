@@ -37,8 +37,21 @@ def registrar(
 ) -> None:
     @aplicacion.post(RUTA_ANALIZAR)
     async def analizar(peticion: Request) -> JSONResponse:
-        eje, intensidad = _leer_cuerpo(await peticion.json(), parametros)
-        resultado = analizar_espectro(eje, intensidad, parametros, catalogo)
+        # T-19: cualquier falla, sea del cuerpo o del motor, termina en el
+        # mismo mensaje de UT-02, sin detalles técnicos. El registro guarda
+        # solo el tipo de error, nunca los valores del espectro.
+        try:
+            eje, intensidad = _leer_cuerpo(await peticion.json(), parametros)
+        except Exception as error:
+            _registro.warning(
+                "api analisis rechazado | tipo=%s", type(error).__name__
+            )
+            return respuesta_de_error(mensajes.ANALISIS_FALLIDO, parametros, 400)
+        try:
+            resultado = analizar_espectro(eje, intensidad, parametros, catalogo)
+        except Exception as error:
+            _registro.error("api analisis fallo del motor | tipo=%s", type(error).__name__)
+            return respuesta_de_error(mensajes.ANALISIS_FALLIDO, parametros, 500)
         return JSONResponse(resultado)
 
 
@@ -62,6 +75,13 @@ def analizar_espectro(
         deteccion["nombre"] = grupo.nombre
         deteccion["familias"] = grupo.familias
         deteccion["porcentaje"] = porcentaje(deteccion["confianza"])
+    if resultado["sin_detecciones"]:
+        aviso = mensajes.obtener(mensajes.SIN_DETECCIONES, parametros)
+        resultado["aviso"] = {
+            "titulo": aviso.titulo,
+            "mensaje": aviso.texto,
+            "accion": aviso.accion,
+        }
     _registro.info(
         "MOD-06 analisis | detecciones=%s",
         ",".join(d["grupo"] for d in resultado["detecciones"]) or "ninguna",

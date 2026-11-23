@@ -9,6 +9,7 @@ Uso habitual:
 """
 
 from backend.utilerias.mensajes.catalogo import (
+    ANALISIS_FALLIDO,
     ARCHIVO_NO_ES_TEXTO,
     ARCHIVO_NO_RECIBIDO,
     CONFIGURACION_INCOMPLETA,
@@ -19,6 +20,7 @@ from backend.utilerias.mensajes.catalogo import (
     LECTURA_INTERRUMPIDA,
     PUNTOS_INSUFICIENTES,
     RANGO_INSUFICIENTE,
+    SIN_DETECCIONES,
     SIN_SENAL,
     TAMANO_EXCEDIDO,
     CodigoDesconocido,
@@ -28,6 +30,7 @@ from backend.utilerias.mensajes.catalogo import (
 )
 
 __all__ = [
+    "ANALISIS_FALLIDO",
     "ARCHIVO_NO_ES_TEXTO",
     "ARCHIVO_NO_RECIBIDO",
     "CONFIGURACION_INCOMPLETA",
@@ -38,6 +41,7 @@ __all__ = [
     "LECTURA_INTERRUMPIDA",
     "PUNTOS_INSUFICIENTES",
     "RANGO_INSUFICIENTE",
+    "SIN_DETECCIONES",
     "SIN_SENAL",
     "TAMANO_EXCEDIDO",
     "CodigoDesconocido",

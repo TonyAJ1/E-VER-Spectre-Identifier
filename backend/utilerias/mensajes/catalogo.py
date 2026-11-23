@@ -71,6 +71,13 @@ DATOS_ILEGIBLES = "DATOS_ILEGIBLES"
 #: analizar (T-11, CA-03.3).
 SIN_SENAL = "SIN_SENAL"
 
+#: Ningún grupo llegó al umbral de confianza de UT-03 (T-19, CA-08).
+SIN_DETECCIONES = "SIN_DETECCIONES"
+
+#: El motor falló por dentro al analizar (T-19, CA-05.4). El texto es el que
+#: pide el criterio, palabra por palabra.
+ANALISIS_FALLIDO = "ANALISIS_FALLIDO"
+
 
 class CodigoDesconocido(Exception):
     """Se pidió un código que no está en el catálogo.
@@ -115,6 +122,10 @@ def _tamano_maximo(configuracion: Configuracion) -> str:
 def _rango(configuracion: Configuracion) -> str:
     minimo, maximo = configuracion.validacion.rango_requerido_cm1
     return f"{minimo:g}{_GUION}{maximo:g} {_CM_MENOS_UNO}"
+
+
+def _umbral(configuracion: Configuracion) -> str:
+    return f"{configuracion.motor.umbral_confianza * 100:g} %"
 
 
 def _puntos_minimos(configuracion: Configuracion) -> str:
@@ -253,6 +264,24 @@ _CATALOGO: dict[str, _Entrada] = {
             "Revise que exportó la medición correcta y que el equipo registró "
             "la muestra, y vuelva a subir el archivo."
         ),
+    ),
+    # Incremento 3, resultados del motor (T-19).
+    SIN_DETECCIONES: _Entrada(
+        titulo="No se encontraron detecciones confiables",
+        texto=lambda c: (
+            "Ningún grupo funcional alcanzó el "
+            f"{_umbral(c)} de confianza, así que no se presenta ninguno como "
+            "detectado."
+        ),
+        accion=lambda c: (
+            "Revise la calidad del espectro: que tenga poco ruido, que la "
+            "línea base esté corregida y que la muestra se haya medido bien."
+        ),
+    ),
+    ANALISIS_FALLIDO: _Entrada(
+        titulo="No se pudo analizar",
+        texto=lambda c: "No fue posible completar el análisis; intenta de nuevo",
+        accion=lambda c: "Su archivo sigue cargado: pulse «Analizar» otra vez.",
     ),
 }
 

@@ -124,8 +124,27 @@
   }
 
   function mostrarResultadoDelAnalisis(respuesta) {
+    if (respuesta.tipo === "resultado" && respuesta.datos.sin_detecciones) {
+      // CA-08: el aviso viene de UT-02 y no se lista ningún grupo.
+      var aviso = respuesta.datos.aviso || {};
+      pintarAnalisis("sin-detecciones", {
+        titulo: aviso.titulo,
+        mensaje: aviso.mensaje,
+        accion: aviso.accion,
+      });
+      return;
+    }
     if (respuesta.tipo === "resultado") {
       mostrarDetecciones(respuesta.datos);
+      return;
+    }
+    if (respuesta.tipo === "error" && respuesta.datos && respuesta.datos.mensaje) {
+      // CA-05.4: mensaje genérico de UT-02. El archivo sigue cargado.
+      pintarAnalisis("error", {
+        titulo: respuesta.datos.titulo,
+        mensaje: respuesta.datos.mensaje,
+        accion: respuesta.datos.accion,
+      });
       return;
     }
     pintarAnalisis("error", {
