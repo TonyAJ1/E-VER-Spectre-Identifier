@@ -108,15 +108,13 @@ def prueba_los_parametros_confirmados_de_la_seccion_3() -> None:
     )
 
 
-def prueba_el_bloque_motor_no_es_obligatorio_en_este_incremento(tmp_path: Path) -> None:
-    """El umbral y los pesos de fusión son del incremento 3: hoy no deben
-    impedir que el backend levante."""
+def prueba_desde_el_incremento_3_el_bloque_motor_es_obligatorio(tmp_path: Path) -> None:
+    """MOD-06 necesita el umbral y los pesos de la fusión para trabajar."""
     datos = _datos_del_repositorio()
     datos.pop("motor", None)
 
-    configuracion = cargar(_escribir(tmp_path, datos))
-
-    assert configuracion.validacion.puntos_minimos == 300
+    with pytest.raises(ErrorDeConfiguracion, match="motor"):
+        cargar(_escribir(tmp_path, datos))
 
 
 # --------------------------------------------------------------------------- #
@@ -132,6 +130,9 @@ LLAVES_OBLIGATORIAS = [
     ("validacion", "jcamp_etiquetas_datos_una_de"),
     ("procesamiento", "puntos_rejilla"),
     ("procesamiento", "rango_rejilla_cm1"),
+    ("motor", "umbral_confianza"),
+    ("motor", "peso_reglas"),
+    ("motor", "peso_ml"),
 ]
 
 
@@ -192,6 +193,10 @@ CASOS_INCOHERENTES = [
     ("rejilla de un solo punto", _con("procesamiento", "puntos_rejilla", 1)),
     ("rejilla decimal", _con("procesamiento", "puntos_rejilla", 1024.5)),
     ("rejilla invertida", _con("procesamiento", "rango_rejilla_cm1", [4000, 400])),
+    ("umbral en cero", _con("motor", "umbral_confianza", 0)),
+    ("umbral mayor que uno", _con("motor", "umbral_confianza", 60)),
+    ("pesos que no suman uno", _con("motor", "peso_ml", 0.5)),
+    ("peso negativo", _con("motor", "peso_reglas", -0.5)),
 ]
 
 

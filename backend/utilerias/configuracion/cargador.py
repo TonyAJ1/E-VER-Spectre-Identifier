@@ -11,8 +11,8 @@ Dos consecuencias de diseño:
 1. Si al arrancar falta una llave obligatoria o su valor es incoherente, se
    levanta `ErrorDeConfiguracion` y el backend **no arranca en silencio**
    (prueba «UT-03 · configuración incompleta» de la sección 10).
-2. El bloque `motor` (umbral de confianza y pesos de fusión) **no** es
-   obligatorio: pertenece al incremento 3 y hoy no debe impedir el arranque.
+2. Desde el incremento 3 el bloque `motor` (umbral de confianza y pesos de
+   la fusión) también es obligatorio, porque MOD-06 no puede trabajar sin él.
 
 Este módulo no depende de UT-02: UT-02 construye sus mensajes a partir de estos
 parámetros, así que la dependencia va en un solo sentido.
@@ -84,12 +84,26 @@ class ParametrosProcesamiento:
 
 
 @dataclass(frozen=True)
+class ParametrosMotor:
+    """Parámetros de MOD-06 desde el incremento 3: umbral y pesos de la fusión.
+
+    La confianza de un grupo es peso_reglas por el puntaje de reglas más
+    peso_ml por la probabilidad del modelo. Los dos pesos suman 1.
+    """
+
+    umbral_confianza: float
+    peso_reglas: float
+    peso_ml: float
+
+
+@dataclass(frozen=True)
 class Configuracion:
     """Los parámetros ya validados, listos para usarse."""
 
     archivo: ParametrosArchivo
     validacion: ParametrosValidacion
     procesamiento: ParametrosProcesamiento
+    motor: ParametrosMotor
     ruta: Path
 
 
@@ -208,6 +222,19 @@ def _rango(
     return minimo, maximo
 
 
+def _fraccion(
+    bloque: dict[str, Any], llave: str, ruta: Path, *, cero: bool = False
+) -> float:
+    """Un número entre 0 y 1. Con cero en falso, el cero no se admite."""
+    valor = _presente(bloque, llave, ruta, "motor")
+    if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+        raise _error(f"«motor.{llave}» debe ser un número", ruta)
+    minimo_ok = valor >= 0 if cero else valor > 0
+    if not minimo_ok or valor > 1:
+        raise _error(f"«motor.{llave}» debe estar entre 0 y 1, no {valor}", ruta)
+    return float(valor)
+
+
 # --------------------------------------------------------------------------- #
 # Carga
 # --------------------------------------------------------------------------- #
@@ -255,6 +282,7 @@ def cargar(ruta: Path | str | None = None) -> Configuracion:
     bloque_archivo = _bloque(datos, "archivo", ruta_final)
     bloque_validacion = _bloque(datos, "validacion", ruta_final)
     bloque_procesamiento = _bloque(datos, "procesamiento", ruta_final)
+    bloque_motor = _bloque(datos, "motor", ruta_final)
 
     parametros_archivo = ParametrosArchivo(
         tamano_maximo_bytes=_entero_positivo(
@@ -301,10 +329,21 @@ def cargar(ruta: Path | str | None = None) -> Configuracion:
         ),
     )
 
+    parametros_motor = ParametrosMotor(
+        umbral_confianza=_fraccion(bloque_motor, "umbral_confianza", ruta_final),
+        peso_reglas=_fraccion(bloque_motor, "peso_reglas", ruta_final, cero=True),
+        peso_ml=_fraccion(bloque_motor, "peso_ml", ruta_final, cero=True),
+    )
+    if abs(parametros_motor.peso_reglas + parametros_motor.peso_ml - 1) > 1e-9:
+        raise _error(
+            "«motor.peso_reglas» y «motor.peso_ml» tienen que sumar 1", ruta_final
+        )
+
     return Configuracion(
         archivo=parametros_archivo,
         validacion=parametros_validacion,
         procesamiento=parametros_procesamiento,
+        motor=parametros_motor,
         ruta=ruta_final,
     )
 
