@@ -311,3 +311,31 @@ input[type="file"]:focus-visible {
   border-radius: 3px;
   opacity: 0.8;
 }
+
+/* Incremento 5: botón del reporte y aviso si falla. */
+
+.boton-reporte {
+  margin-top: 14px;
+  width: 100%;
+  border: 1px solid var(--principal);
+  background: transparent;
+  color: var(--principal);
+}
+
+.reporte-estado {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--error);
+  border-radius: var(--radio);
+  background: var(--error-fondo);
+}
+
+.reporte-mensaje {
+  margin: 0;
+  color: var(--error);
+  font-weight: 600;
+}
+
+.reporte-accion {
+  margin: 4px 0 0;
+}

@@ -46,7 +46,7 @@ from starlette.datastructures import UploadFile
 
 from backend.manejador_archivos import recibir
 from backend.nucleo import NOMBRE_RAIZ, obtener_registro
-from backend.api import analisis
+from backend.api import analisis, reporte
 from backend.preprocesamiento.procesador import EspectroProcesado, procesar
 from backend.utilerias.catalogo import Catalogo
 from backend.utilerias.catalogo import obtener as obtener_catalogo
@@ -138,6 +138,8 @@ def crear_aplicacion(
 
     # Incremento 3: la ruta del análisis vive en backend/api/analisis.py.
     analisis.registrar(aplicacion, parametros, grupos)
+    # Incremento 5: la ruta del reporte PDF vive en backend/api/reporte.py.
+    reporte.registrar(aplicacion, parametros, grupos)
 
     @aplicacion.get("/", include_in_schema=False)
     async def inicio() -> RedirectResponse:

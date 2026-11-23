@@ -7,3 +7,4 @@
 *.csv   -text
 *.png   binary
 datos/pruebas/** -text
+*.ttf   binary

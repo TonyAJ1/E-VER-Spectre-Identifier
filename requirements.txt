@@ -3,17 +3,20 @@
 # Stack confirmado en CLAUDE.md: Python + FastAPI (backend), HTML/CSS/JS puro
 # (frontend), sin base de datos.
 #
-# Incremento 1 (A) · subir y validar. NO se agregan dependencias de graficas,
-# machine learning ni PDF: esas decisiones son D-1 (incremento 2) y D-3
-# (incremento 5) y todavia no estan tomadas.
+# La libreria de graficas (D-1, Chart.js) vive en el frontend y no se instala
+# con pip. La de PDF (D-3, reportlab) se agrego en el incremento 5. El motor
+# todavia no usa machine learning (plan B de MOD-06), asi que no hay
+# dependencias para eso.
 
 # --- Aplicacion ---
 fastapi==0.165.0
 uvicorn==0.54.0
 python-multipart==0.0.34   # requerido por FastAPI para multipart/form-data (POST /api/validar)
+reportlab==4.2.5           # incremento 5, decision D-3: arma el reporte PDF en memoria (MOD-08)
 
 # --- Pruebas (RNF-06) ---
 pytest==9.2.0
 httpx==0.28.1              # cliente de pruebas de FastAPI (TestClient), usado a partir de T-07
+pypdf==5.1.0               # incremento 5: las pruebas leen el texto y las imagenes del PDF
 playwright==1.65.2         # navegador real para probar MOD-01 (T-06) y CA-01.1 de punta a punta (T-07).
                            # Una sola vez despues de instalar: python -m playwright install chromium

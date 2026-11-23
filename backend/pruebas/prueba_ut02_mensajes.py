@@ -160,6 +160,8 @@ CODIGOS_ESPERADOS = (
     mensajes.ANALISIS_FALLIDO,
     # Agregado por T-22 para el grupo sin plantilla.
     mensajes.EXPLICACION_NO_DISPONIBLE,
+    # Agregado por T-25 para el aviso del reporte.
+    mensajes.RESULTADO_ORIENTATIVO,
 )
 
 

@@ -33,6 +33,7 @@
     rasgo: "Lo que lo delata",
     porQue: "Por qué corresponde a este grupo",
     resaltar: "Resaltar en la gráfica",
+    nombreReporte: "reporte_analisis.pdf",
   };
 
   var formulario = document.getElementById("formulario");
@@ -49,6 +50,16 @@
   var analisisMensaje = document.getElementById("analisis-mensaje");
   var analisisAccion = document.getElementById("analisis-accion");
   var analisisLista = document.getElementById("analisis-lista");
+
+  var botonReporte = document.getElementById("boton-reporte");
+  var reporteEstado = document.getElementById("reporte-estado");
+  var reporteMensaje = document.getElementById("reporte-mensaje");
+  var reporteAccion = document.getElementById("reporte-accion");
+
+  // Incremento 5: lo que hace falta para pedir el reporte del último
+  // análisis. El servidor no guarda nada, así que la página lo conserva.
+  var nombreActual = null;
+  var analisisActual = null;
 
   // El espectro procesado del último archivo aprobado. Es lo único que se
   // manda al motor; el archivo no se vuelve a subir.
@@ -82,6 +93,7 @@
     ocultarGrafica();
     ocultarAnalisis();
     espectroActual = null;
+    nombreActual = null;
   }
 
   // Incremento 3: resultados del análisis.
@@ -100,6 +112,7 @@
 
   function pintarAnalisis(estado, piezas) {
     quitarResaltado();
+    ocultarReporte();
     seccionAnalisis.hidden = false;
     seccionAnalisis.dataset.estado = estado;
     poner(analisisTitulo, piezas.titulo);
@@ -206,6 +219,85 @@
     });
   }
 
+  // Incremento 5: reporte PDF.
+
+  function ocultarReporte() {
+    analisisActual = null;
+    botonReporte.hidden = true;
+    reporteEstado.hidden = true;
+  }
+
+  function fechaLocal(fecha) {
+    // La fecha y hora local con su diferencia respecto a UTC, en el formato
+    // que entiende el servidor, por ejemplo 2026-11-23T15:41:00-06:00.
+    function dos(n) { return (n < 10 ? "0" : "") + n; }
+    var minutos = -fecha.getTimezoneOffset();
+    var signo = minutos >= 0 ? "+" : "-";
+    minutos = Math.abs(minutos);
+    return fecha.getFullYear() + "-" + dos(fecha.getMonth() + 1) + "-" + dos(fecha.getDate()) +
+      "T" + dos(fecha.getHours()) + ":" + dos(fecha.getMinutes()) + ":" + dos(fecha.getSeconds()) +
+      signo + dos(Math.floor(minutos / 60)) + ":" + dos(minutos % 60);
+  }
+
+  function prepararReporte(resultado) {
+    analisisActual = { resultado: resultado, fechaHora: fechaLocal(new Date()) };
+    botonReporte.hidden = false;
+    botonReporte.disabled = false;
+  }
+
+  function cuerpoDelReporte() {
+    return {
+      nombre_archivo: nombreActual,
+      fecha_hora: analisisActual.fechaHora,
+      detecciones: analisisActual.resultado.detecciones.map(function (d) {
+        return {
+          grupo: d.grupo,
+          confianza: d.confianza,
+          region_cm1: d.region_cm1,
+          pico_cm1: d.pico_cm1,
+        };
+      }),
+    };
+  }
+
+  function descargar(archivo) {
+    var enlace = document.createElement("a");
+    var direccion = URL.createObjectURL(archivo);
+    enlace.href = direccion;
+    enlace.download = TEXTOS.nombreReporte;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(function () { URL.revokeObjectURL(direccion); }, 1000);
+  }
+
+  function mostrarFalloDelReporte(datos) {
+    reporteEstado.hidden = false;
+    poner(reporteMensaje, datos && datos.mensaje ? datos.mensaje : TEXTOS.sinConexionMensaje);
+    poner(reporteAccion, datos && datos.accion ? datos.accion : TEXTOS.sinConexionAccion);
+  }
+
+  botonReporte.addEventListener("click", function () {
+    if (!analisisActual) {
+      return;
+    }
+    botonReporte.disabled = true;
+    reporteEstado.hidden = true;
+    window.EVER.servicios
+      .pedirReporte(cuerpoDelReporte())
+      .then(function (respuesta) {
+        if (respuesta.tipo === "pdf") {
+          descargar(respuesta.datos);
+          return;
+        }
+        mostrarFalloDelReporte(respuesta.datos);
+      })
+      .finally(function () {
+        // Los resultados siguen en pantalla y se puede volver a intentar.
+        botonReporte.disabled = analisisActual === null;
+      });
+  });
+
   function mostrarResultadoDelAnalisis(respuesta) {
     if (respuesta.tipo === "resultado" && respuesta.datos.sin_detecciones) {
       // CA-08: el aviso viene de UT-02 y no se lista ningún grupo.
@@ -219,6 +311,7 @@
     }
     if (respuesta.tipo === "resultado") {
       mostrarDetecciones(respuesta.datos);
+      prepararReporte(respuesta.datos);
       return;
     }
     if (respuesta.tipo === "error" && respuesta.datos && respuesta.datos.mensaje) {
@@ -251,6 +344,7 @@
       });
       if (veredicto.espectro) {
         espectroActual = veredicto.espectro;
+        nombreActual = veredicto.nombre;
         mostrarGrafica(veredicto.espectro);
       }
       return;
@@ -292,6 +386,7 @@
     ocultarGrafica();
     ocultarAnalisis();
     espectroActual = null;
+    nombreActual = null;
   });
 
   formulario.addEventListener("submit", function (evento) {

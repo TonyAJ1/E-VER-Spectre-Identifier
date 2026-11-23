@@ -56,6 +56,14 @@
       <p id="analisis-mensaje" class="analisis-mensaje" hidden></p>
       <p id="analisis-accion" class="analisis-accion" hidden></p>
       <ol id="analisis-lista" class="analisis-lista"></ol>
+      <!-- Incremento 5: el reporte PDF del análisis. -->
+      <button id="boton-reporte" class="boton boton-reporte" type="button" hidden>
+        Descargar reporte
+      </button>
+      <div id="reporte-estado" class="reporte-estado" aria-live="polite" hidden>
+        <p id="reporte-mensaje" class="reporte-mensaje"></p>
+        <p id="reporte-accion" class="reporte-accion"></p>
+      </div>
     </section>
   </main>
 
@@ -63,6 +71,7 @@
   <script src="../visor-espectro/visor.js"></script>
   <script src="../servicios/validacion.js"></script>
   <script src="../servicios/analisis.js"></script>
+  <script src="../servicios/reporte.js"></script>
   <script src="interfaz.js"></script>
 </body>
 </html>

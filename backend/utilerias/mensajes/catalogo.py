@@ -81,6 +81,9 @@ ANALISIS_FALLIDO = "ANALISIS_FALLIDO"
 #: Un grupo detectado no tiene plantilla de explicación (T-22, CA-07.3).
 EXPLICACION_NO_DISPONIBLE = "EXPLICACION_NO_DISPONIBLE"
 
+#: El aviso de que el resultado es orientativo, que lleva el reporte (RF-08).
+RESULTADO_ORIENTATIVO = "RESULTADO_ORIENTATIVO"
+
 
 class CodigoDesconocido(Exception):
     """Se pidió un código que no está en el catálogo.
@@ -296,6 +299,20 @@ _CATALOGO: dict[str, _Entrada] = {
         accion=lambda c: (
             "Consulte la región y la confianza del grupo; el resto de los "
             "resultados está completo."
+        ),
+    ),
+    # Incremento 5, reporte PDF (T-25).
+    RESULTADO_ORIENTATIVO: _Entrada(
+        titulo="Resultado orientativo",
+        texto=lambda c: (
+            "Este análisis es orientativo. Lo genera un sistema automático a "
+            "partir de tablas de correlación y no sustituye la interpretación "
+            "de una persona con formación en química ni otras técnicas de "
+            "análisis."
+        ),
+        accion=lambda c: (
+            "Confirme los grupos importantes con otras pruebas antes de tomar "
+            "decisiones con ellos."
         ),
     ),
 }
