@@ -10,7 +10,9 @@ Uso habitual:
 
 from backend.utilerias.mensajes.catalogo import (
     ARCHIVO_NO_ES_TEXTO,
+    ARCHIVO_NO_RECIBIDO,
     CONFIGURACION_INCOMPLETA,
+    ERROR_INTERNO,
     ESTRUCTURA_INVALIDA,
     FORMATO_NO_SOPORTADO,
     LECTURA_INTERRUMPIDA,
@@ -25,7 +27,9 @@ from backend.utilerias.mensajes.catalogo import (
 
 __all__ = [
     "ARCHIVO_NO_ES_TEXTO",
+    "ARCHIVO_NO_RECIBIDO",
     "CONFIGURACION_INCOMPLETA",
+    "ERROR_INTERNO",
     "ESTRUCTURA_INVALIDA",
     "FORMATO_NO_SOPORTADO",
     "LECTURA_INTERRUMPIDA",

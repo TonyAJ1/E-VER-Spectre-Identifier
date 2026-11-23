@@ -148,10 +148,13 @@ CODIGOS_ESPERADOS = (
     mensajes.ESTRUCTURA_INVALIDA,
     mensajes.CONFIGURACION_INCOMPLETA,
     mensajes.LECTURA_INTERRUMPIDA,
+    # Agregados por T-07 para la capa HTTP (contrato D-5 de la sección 5).
+    mensajes.ARCHIVO_NO_RECIBIDO,
+    mensajes.ERROR_INTERNO,
 )
 
 
-def prueba_el_catalogo_cubre_las_ocho_situaciones_de_la_seccion_4() -> None:
+def prueba_el_catalogo_cubre_las_situaciones_del_incremento_1() -> None:
     assert set(mensajes.codigos()) == set(CODIGOS_ESPERADOS)
 
 

@@ -107,9 +107,15 @@ VARIABLE_EVIDENCIA = "EVER_EVIDENCIA"
 CARPETA_FRONTEND = RAIZ / "frontend"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def navegador():
-    """Un Chromium sin ventana para toda la corrida."""
+    """Un Chromium sin ventana por archivo de pruebas.
+
+    Por archivo y no por corrida: mientras Playwright está abierto mantiene un
+    bucle de eventos en el hilo principal, y las pruebas de MOD-02 necesitan
+    `asyncio.run`. Al cerrar el navegador al final de cada archivo, el bucle
+    se suelta antes de que lleguen las demás.
+    """
     import os
 
     sync_api = pytest.importorskip(

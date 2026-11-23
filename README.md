@@ -45,23 +45,21 @@ source .venv/bin/activate      # macOS / Linux
 
 # 3. Dependencias
 pip install -r requirements.txt
+
+# 4. Navegador para las pruebas de la interfaz (una sola vez)
+python -m playwright install chromium
 ```
 
-### Backend
+### Levantar la aplicación
 
 ```bash
 uvicorn backend.api.aplicacion:app --reload --port 8000
 ```
 
-> El punto de entrada `backend/api/aplicacion.py` queda disponible al cerrar **T-07**
-> (integración de punta a punta). Hasta entonces el backend no se levanta todavía: lo que
-> sí se puede ejecutar son las pruebas.
-
-### Frontend
-
-`frontend/interfaz/index.html` se abre directo en el navegador (HTML/CSS/JS puro, sin
-compilación ni servidor de desarrollo). Llega con **T-06**; necesita el backend arriba para
-que la validación responda de verdad.
+Después abra **http://localhost:8000/** en el navegador. El mismo servidor entrega la
+interfaz (`frontend/`) y atiende `POST /api/validar`, así que no hay que abrir el HTML a mano
+ni configurar nada más. Si a `parametros.json` le falta una llave obligatoria, el servidor
+**no arranca** y dice cuál.
 
 ### Pruebas
 
@@ -72,8 +70,17 @@ pytest
 Lee `pytest.ini`: colecta `backend/pruebas/prueba_*.py`. Para una sola tarea:
 
 ```bash
-pytest backend/pruebas/prueba_ut03_configuracion.py
+pytest backend/pruebas/prueba_mod03_puntos_rango.py   # T-05
+pytest backend/pruebas/prueba_mod01_interfaz.py       # T-06 (navegador, veredictos simulados)
+pytest backend/pruebas/prueba_t07_integracion.py      # T-07 (punta a punta)
 ```
+
+Las pruebas de T-06 y T-07 abren un Chromium sin ventana con Playwright. Dos variables
+opcionales:
+
+- `EVER_EVIDENCIA=<carpeta>` copia ahí las capturas de pantalla que sirven de evidencia
+  (CA-01.1, CA-01.3, CA-02.4). Use una carpeta **fuera** del repositorio.
+- `EVER_CHROMIUM=<ruta>` usa un Chromium ya instalado en vez del de Playwright.
 
 ## Configuración (UT-03)
 

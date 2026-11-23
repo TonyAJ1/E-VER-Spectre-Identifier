@@ -15,7 +15,9 @@ mensaje, aunque su redacción sea libre: archivo que no es texto, estructura
 inválida, configuración incompleta al arrancar y lectura interrumpida.
 
 El catálogo se completa conforme aparezcan más situaciones; hoy no se inventan
-códigos que ninguna tarea del incremento 1 use todavía.
+códigos que ninguna tarea del incremento 1 use todavía. T-07 agregó los dos que
+pide la capa HTTP: la petición sin archivo y el fallo interno (la respuesta 500
+«con mensaje genérico de UT-02» de la sección 5 del plan).
 """
 
 from __future__ import annotations
@@ -53,6 +55,12 @@ CONFIGURACION_INCOMPLETA = "CONFIGURACION_INCOMPLETA"
 
 #: La lectura del archivo se interrumpió antes de terminar (pruebas RNF-09).
 LECTURA_INTERRUMPIDA = "LECTURA_INTERRUMPIDA"
+
+#: La petición llegó sin el campo «archivo» (T-07, contrato D-5).
+ARCHIVO_NO_RECIBIDO = "ARCHIVO_NO_RECIBIDO"
+
+#: Fallo interno del servidor: la respuesta 500 genérica del contrato D-5 (T-07).
+ERROR_INTERNO = "ERROR_INTERNO"
 
 
 class CodigoDesconocido(Exception):
@@ -192,6 +200,25 @@ _CATALOGO: dict[str, _Entrada] = {
             "no se pudo revisar el espectro."
         ),
         accion=lambda c: "Vuelva a subir el archivo.",
+    ),
+    # --- Capa HTTP (T-07) ------------------------------------------------- #
+    ARCHIVO_NO_RECIBIDO: _Entrada(
+        titulo="No se recibió ningún archivo",
+        texto=lambda c: "La solicitud llegó sin el archivo del espectro.",
+        accion=lambda c: (
+            "Elija el archivo del espectro y vuelva a enviarlo para revisarlo."
+        ),
+    ),
+    ERROR_INTERNO: _Entrada(
+        titulo="No se pudo revisar el archivo",
+        texto=lambda c: (
+            "Ocurrió un problema en el servidor mientras se revisaba el "
+            "espectro. Su archivo no se guardó."
+        ),
+        accion=lambda c: (
+            "Intente de nuevo en unos momentos; si se repite, avise al equipo "
+            "del proyecto."
+        ),
     ),
 }
 
