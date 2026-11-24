@@ -183,6 +183,7 @@ def _malos(bueno: dict) -> dict[str, object]:
     al_reves = {**bueno, "eje_cm1": list(reversed(bueno["eje_cm1"]))}
     con_texto = {**bueno, "intensidad": ["0.1"] + bueno["intensidad"][1:]}
     medido_al_reves = {**bueno, "rango_medido_cm1": [4000, 400]}
+    medido_afuera = {**bueno, "rango_medido_cm1": [100, 300]}
     sin_eje = {k: v for k, v in bueno.items() if k != "eje_cm1"}
     return {
         "intensidad corta": corto,
@@ -190,10 +191,21 @@ def _malos(bueno: dict) -> dict[str, object]:
         "eje al revés": al_reves,
         "número como texto": con_texto,
         "tramo medido al revés": medido_al_reves,
+        "tramo medido fuera de la rejilla": medido_afuera,
         "sin eje": sin_eje,
         "una lista": [1, 2, 3],
         "nada": None,
     }
+
+
+def prueba_un_tramo_medido_mas_ancho_que_la_rejilla_se_acepta(cliente) -> None:
+    """Un archivo real medido desde 374 cm⁻¹ (Chemotion) pasa /api/procesar y
+    tiene que poder analizarse: el tramo medido se sale de la rejilla."""
+    espectro = {**_espectro_bueno(cliente), "rango_medido_cm1": [373.96442, 3997.453]}
+
+    datos = _analizar(cliente, espectro).json()
+
+    assert datos["valido"] is True
 
 
 def prueba_un_vector_mal_formado_se_rechaza_sin_llegar_al_motor(cliente, monkeypatch) -> None:

@@ -8,7 +8,9 @@ contrato de MOD-04 a MOD-06:
 1. El eje tiene los puntos de la rejilla de UT-03 y va de 4000 a 400 cm⁻¹ en
    pasos parejos, con la misma tolerancia de seis decimales con que viaja.
 2. La intensidad tiene la misma longitud y cada valor es un número entre 0 y 1.
-3. El tramo medido son dos números dentro de la rejilla, el menor primero.
+3. El tramo medido son dos números, el menor primero, que se cruzan con la
+   rejilla. Puede salirse de ella: es lo que de verdad cubría el archivo, y
+   muchos equipos miden desde menos de 400 cm⁻¹.
 
 Si algo no cuadra se devuelve None y la ruta responde ESPECTRO_INVALIDO. Aquí
 no se redacta ningún mensaje.
@@ -85,7 +87,7 @@ def espectro_desde(cuerpo: Any, configuracion: Configuracion) -> EspectroRecibid
         return None
 
     menor, mayor = medido
-    if not minimo - TOLERANCIA_EJE_CM1 <= menor < mayor <= maximo + TOLERANCIA_EJE_CM1:
+    if not (menor < mayor and menor < maximo and mayor > minimo):
         return None
 
     return EspectroRecibido(eje, intensidad, (menor, mayor))
