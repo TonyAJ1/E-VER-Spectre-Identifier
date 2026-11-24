@@ -31,6 +31,7 @@ from backend.reportes import AVISO_ORIENTATIVO, AVISO_SOLO_REGLAS, TITULO
 from backend.utilerias import mensajes
 from backend.utilerias.configuracion import obtener as obtener_configuracion
 from motor_identificacion.inferencia import ResultadoMotor
+from motor_identificacion.inferencia.red import ARCHIVO_PESOS
 
 RAIZ = Path(__file__).resolve().parents[2]
 
@@ -128,10 +129,20 @@ def prueba_una_grafica_muy_alta_cabe_en_la_hoja(cliente) -> None:
     assert _imagenes(respuesta.content) == 1
 
 
-def prueba_sin_modelo_el_reporte_dice_que_fue_solo_con_reglas(cliente) -> None:
-    texto = " ".join(_texto(cliente.post(RUTA_REPORTE, json=_cuerpo(cliente)).content).split())
+def prueba_sin_modelo_el_reporte_dice_que_fue_solo_con_reglas() -> None:
+    with TestClient(crear_aplicacion(modelo=None)) as solo_reglas:
+        respuesta = solo_reglas.post(RUTA_REPORTE, json=_cuerpo(solo_reglas))
+    texto = " ".join(_texto(respuesta.content).split())
 
     assert AVISO_SOLO_REGLAS in texto
+
+
+def prueba_con_la_red_el_reporte_no_dice_que_fue_solo_con_reglas(cliente) -> None:
+    if not ARCHIVO_PESOS.is_file():
+        pytest.skip("no hay red entrenada")
+    texto = " ".join(_texto(cliente.post(RUTA_REPORTE, json=_cuerpo(cliente)).content).split())
+
+    assert AVISO_SOLO_REGLAS not in texto
 
 
 def prueba_el_pdf_se_descarga_con_un_nombre_seguro(cliente) -> None:

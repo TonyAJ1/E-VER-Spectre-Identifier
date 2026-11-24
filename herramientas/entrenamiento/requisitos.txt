@@ -1,0 +1,3 @@
+# Solo para entrenar la red (T-16c). NO es dependencia de la aplicacion:
+# se instala en un entorno aparte. La aplicacion usa los pesos con NumPy.
+torch==2.5.1

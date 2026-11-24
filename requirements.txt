@@ -20,3 +20,6 @@ httpx==0.28.1              # cliente de pruebas de FastAPI (TestClient), usado a
 reportlab==4.2.5           # arma el PDF del reporte en memoria (MOD-08)
 pillow==12.3.0             # reportlab lo necesita para leer la imagen PNG de la grafica
 pypdf==5.1.0               # solo pruebas: lee el PDF generado para revisar su texto
+
+# --- Incremento 3, vía ML (T-16c) ---
+numpy==2.5.3               # la aplicación corre la red entrenada con NumPy, sin PyTorch

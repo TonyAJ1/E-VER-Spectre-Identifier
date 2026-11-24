@@ -31,6 +31,7 @@ from fastapi.testclient import TestClient
 
 from backend.api import RUTA_ANALIZAR, RUTA_PROCESAR, crear_aplicacion
 from backend.api import aplicacion as capa_http
+from motor_identificacion.inferencia.red import ARCHIVO_PESOS
 from backend.utilerias import mensajes
 from backend.utilerias.configuracion import obtener as obtener_configuracion
 from motor_identificacion.inferencia import MODO_HIBRIDO, MODO_REGLAS
@@ -137,9 +138,13 @@ def prueba_la_lista_va_de_mayor_a_menor(cliente) -> None:
 
 
 def prueba_sin_modelo_entrenado_el_motor_trabaja_solo_con_reglas(cliente, caplog) -> None:
-    """D-16.4: la falta de modelo se anota en el registro y no es un error."""
+    """D-16.4: la falta de modelo se anota en el registro y no es un error.
+
+    Desde T-16c la aplicación carga la red del repositorio por omisión; aquí
+    se le pide explícitamente que arranque sin ella.
+    """
     with caplog.at_level(logging.INFO):
-        with TestClient(crear_aplicacion()) as nuevo:
+        with TestClient(crear_aplicacion(modelo=None)) as nuevo:
             espectro = _procesar(nuevo, "cetona.csv", _csv(_carbonilo))["espectro"]
             datos = _analizar(nuevo, espectro).json()
 
@@ -289,7 +294,8 @@ def _ruido(semilla: int) -> Callable[[float], float]:
     strict=True,
     reason=(
         "Hallazgo: la vía de reglas de T-15d reporta entre cinco y seis grupos "
-        "sobre ruido puro (62 a 80 %). No se recalibra para pasar la prueba."
+        "sobre ruido puro (62 a 80 %), y con la red de T-16c el motor completo "
+        "todavía no baja todos del umbral. No se recalibra para pasar la prueba."
     ),
 )
 @pytest.mark.parametrize("semilla", [1, 2, 7])
@@ -301,20 +307,33 @@ def prueba_ca_08_1_un_espectro_ruidoso_no_deja_grupos(cliente, semilla) -> None:
     assert datos["sin_detecciones"] is True
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Hallazgo: con una línea base inclinada o curva, la vía de reglas "
-        "reporta O–H al 100 % sin pico. No se recalibra para pasar la prueba."
-    ),
-)
 @pytest.mark.parametrize(
     "linea",
     [
-        lambda x: 0.1 + 0.00002 * (4000 - x),
-        lambda x: 0.1 + 0.05 * ((x - 2200) / 1800) ** 2,
+        pytest.param(
+            lambda x: 0.1 + 0.00002 * (4000 - x),
+            id="inclinada",
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason=(
+                    "Hallazgo: con una línea base inclinada, la vía de reglas "
+                    "reporta O–H al 100 % sin pico, y ni con la red el motor "
+                    "completo baja del umbral. No se recalibra para pasar la prueba."
+                ),
+            ),
+        ),
+        pytest.param(
+            lambda x: 0.1 + 0.05 * ((x - 2200) / 1800) ** 2,
+            id="curva",
+            # Solo con reglas también falla; con la red de T-16c el motor
+            # completo ya acierta. Sin archivo de pesos vuelve el hallazgo.
+            marks=pytest.mark.xfail(
+                not ARCHIVO_PESOS.is_file(),
+                strict=True,
+                reason="sin la red, la vía de reglas reporta O–H al 100 % sin pico",
+            ),
+        ),
     ],
-    ids=["inclinada", "curva"],
 )
 def prueba_ca_08_3_solo_linea_base_avisa_sin_detecciones(cliente, linea) -> None:
     espectro = _procesar(cliente, "linea.csv", _csv(linea))["espectro"]

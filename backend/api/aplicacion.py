@@ -65,6 +65,7 @@ from backend.utilerias.catalogo import obtener as obtener_catalogo
 from backend.utilerias.catalogo import obtener_plantillas
 from backend.validacion import validar
 from motor_identificacion.inferencia import ModeloML, identificar, motivo_para_solo_reglas
+from motor_identificacion.inferencia.red import ErrorDeModelo, cargar_red
 
 _registro = obtener_registro("api")
 
@@ -148,6 +149,25 @@ def _configuracion_de_arranque() -> Configuracion:
         raise
 
 
+#: El valor por omisión de `modelo` en crear_aplicacion: cargar la red que
+#: está guardada en el repositorio (T-16c). Las pruebas pasan None para
+#: trabajar solo con reglas.
+MODELO_DEL_REPOSITORIO = "red del repositorio"
+
+
+def _modelo_de_arranque(catalogo: Any) -> ModeloML | None:
+    """La red guardada en motor_identificacion/modelo, o None si no se puede.
+
+    Que no haya red no es un error (D-16): se anota en el registro y la
+    aplicación sigue solo con reglas.
+    """
+    try:
+        return cargar_red(grupos_esperados=tuple(g.id for g in catalogo.grupos))
+    except ErrorDeModelo as error:
+        _registro.info("motor arranque | red no cargada | motivo=%s", error)
+        return None
+
+
 async def _leer_json(peticion: Request, limite_bytes: int) -> Any:
     """El JSON del cuerpo, o None si no es JSON o pasa del límite.
 
@@ -177,7 +197,7 @@ def crear_aplicacion(
     configuracion: Configuracion | None = None,
     *,
     carpeta_frontend: Path | None = None,
-    modelo: ModeloML | None = None,
+    modelo: ModeloML | str | None = MODELO_DEL_REPOSITORIO,
 ) -> FastAPI:
     """Arma la aplicación.
 
@@ -190,10 +210,11 @@ def crear_aplicacion(
             repositorio. La herramienta de evidencia pasa una **copia temporal**
             con un archivo extra que dispara la subida sola para la captura; así
             el frontend del repositorio no lleva ganchos de prueba.
-        modelo: la red neuronal de T-16 ya cargada. Mientras no exista un
-            modelo entrenado se queda en None y el motor trabaja solo con
-            reglas, como pide D-16. La aplicación lo anota en el registro al
-            arrancar y no se lo muestra al usuario.
+        modelo: la red neuronal de T-16. Por omisión se carga la que está
+            guardada en motor_identificacion/modelo. Con None, o si esa red
+            no existe o no corresponde a la configuración, el motor trabaja
+            solo con reglas, como pide D-16. La aplicación lo anota en el
+            registro al arrancar y no se lo muestra al usuario.
 
     Returns:
         La aplicación lista para servir.
@@ -241,6 +262,8 @@ def crear_aplicacion(
                 continue
             explicaciones[deteccion.grupo] = explicacion
         return explicaciones
+    if modelo is MODELO_DEL_REPOSITORIO:
+        modelo = _modelo_de_arranque(catalogo)
     motivo = motivo_para_solo_reglas(modelo, parametros)
     if motivo is not None:
         # D-16: la falta de modelo es una degradación anunciada, no un error.
