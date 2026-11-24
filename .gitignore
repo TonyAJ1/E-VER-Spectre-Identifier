@@ -23,10 +23,12 @@ Thumbs.db
 datos/referencia/*
 !datos/referencia/.gitkeep
 
-# Pesos del modelo de MOD-06: datos pesados, se respaldan aparte (ver el riesgo
-# de dataset del plan).
+# Pesos del modelo de MOD-06: mientras se itera no se suben (D-18). Se versiona
+# un solo archivo final, red.npz, con su nota de licencia al lado.
 motor_identificacion/modelo/*
 !motor_identificacion/modelo/.gitkeep
+!motor_identificacion/modelo/red.npz
+!motor_identificacion/modelo/LEEME.md
 
 # UT-03 · el archivo de parametros SI va versionado (D-6): la prueba antideriva
 # y el arranque del backend dependen de que este en el repositorio.
@@ -40,3 +42,5 @@ tmp/
 # redistribuyen; lo que se versiona es el indice, los scripts y la nota de
 # origen (datos/dataset/ORIGEN.md).
 datos/dataset/espectros/
+# Los vectores que deja T-16a-2 salen de esos espectros: tampoco se suben.
+datos/dataset/vectores.npz

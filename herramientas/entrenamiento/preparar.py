@@ -51,24 +51,41 @@ class Preparado:
     codigo: str | None
 
 
+def espectro_redondeado(
+    nombre: str, contenido: str, configuracion: Configuracion | None = None
+) -> tuple[EspectroRedondeado | None, str | None]:
+    """El espectro completo tal como lo recibe el motor, o None y el código.
+
+    La evaluación de T-16d lo usa para correr el motor completo, con las dos
+    vías, sobre los mismos datos que vio el entrenamiento.
+    """
+    parametros = configuracion if configuracion is not None else obtener_configuracion()
+
+    veredicto = validar(nombre, contenido, tamano_correcto=True, configuracion=parametros)
+    if not veredicto.valido:
+        return None, veredicto.codigo
+
+    salida = procesar(nombre, contenido, parametros)
+    if not salida.valido:
+        return None, salida.codigo
+
+    espectro = salida.espectro
+    return (
+        EspectroRedondeado(
+            eje_cm1=tuple(round(x, DECIMALES_ESPECTRO) for x in espectro.eje_cm1),
+            intensidad=tuple(round(y, DECIMALES_ESPECTRO) for y in espectro.intensidad),
+            rango_medido_cm1=tuple(espectro.rango_medido_cm1),  # type: ignore[arg-type]
+        ),
+        None,
+    )
+
+
 def preparar(
     nombre: str, contenido: str, configuracion: Configuracion | None = None
 ) -> Preparado:
     """El vector de entrenamiento de un archivo, por la ruta de producción."""
     parametros = configuracion if configuracion is not None else obtener_configuracion()
-
-    veredicto = validar(nombre, contenido, tamano_correcto=True, configuracion=parametros)
-    if not veredicto.valido:
-        return Preparado(None, veredicto.codigo)
-
-    salida = procesar(nombre, contenido, parametros)
-    if not salida.valido:
-        return Preparado(None, salida.codigo)
-
-    espectro = salida.espectro
-    redondeado = EspectroRedondeado(
-        eje_cm1=tuple(round(x, DECIMALES_ESPECTRO) for x in espectro.eje_cm1),
-        intensidad=tuple(round(y, DECIMALES_ESPECTRO) for y in espectro.intensidad),
-        rango_medido_cm1=tuple(espectro.rango_medido_cm1),  # type: ignore[arg-type]
-    )
+    redondeado, codigo = espectro_redondeado(nombre, contenido, parametros)
+    if redondeado is None:
+        return Preparado(None, codigo)
     return Preparado(ventana_del_modelo(redondeado, parametros), None)
